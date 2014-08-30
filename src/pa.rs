@@ -104,70 +104,89 @@ pub enum PaStreamCallbackResult
     Abort = ll::paAbort,
 }
 
-pub type PaStreamCallback = |input: &[f32], output: &mut [f32]|:'static -> PaStreamCallbackResult;
+pub type PaStreamCallback<T> = |input: &[T], output: &mut [T]|:'static -> PaStreamCallbackResult;
 
-extern "C" fn stream_callback(input: *const ::libc::c_void,
+extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
                               output: *mut ::libc::c_void,
                               frame_count: ::libc::c_ulong,
                               _time_info: *const ll::PaStreamCallbackTimeInfo,
                               _status_flags: ll::PaStreamCallbackFlags,
                               user_data: *mut ::libc::c_void) -> ::libc::c_int
 {
-    let buffer_length = (frame_count * 2) as uint;
-    let input_buffer: &[f32] = unsafe
+    let stream_data: Box<PaStreamUserData<T>> = unsafe { ::std::mem::transmute(user_data) };
+    let input_buffer: &[T] = unsafe
     {
         ::std::mem::transmute(
-            ::std::raw::Slice { data: input as *const f32, len: buffer_length}
+            ::std::raw::Slice { data: input as *const T, len: frame_count as uint * stream_data.num_input }
         )
     };
-    let output_buffer: &mut [f32] = unsafe
+    let output_buffer: &mut [T] = unsafe
     {
         ::std::mem::transmute(
-            ::std::raw::Slice { data: output as *const f32, len: buffer_length }
+            ::std::raw::Slice { data: output as *const T, len: frame_count as uint * stream_data.num_output }
         )
     };
 
-    let f: Box<PaStreamCallback> = unsafe { ::std::mem::transmute(user_data) };
-    let result = (*f)(input_buffer, output_buffer);
+    let result = (stream_data.callback)(input_buffer, output_buffer);
 
-    match result
-    {
-        Complete | Abort => {},
-        Continue => unsafe { ::std::mem::forget(f); },
-    }
+    unsafe { ::std::mem::forget(stream_data); }
 
     result as i32
 }
 
-pub struct PaStream
+struct PaStreamUserData<T>
 {
-    pa_stream: *mut ll::PaStream,
-    _callback: Box<PaStreamCallback>,
+    num_input: uint,
+    num_output: uint,
+    callback: PaStreamCallback<T>,
 }
 
-impl PaStream
+trait PaType { fn as_sample_format(_: Option<Self>) -> u64; }
+impl PaType for f32 { fn as_sample_format(_: Option<f32>) -> u64 { 0x00000001 } }
+impl PaType for i32 { fn as_sample_format(_: Option<i32>) -> u64 { 0x00000002 } }
+impl PaType for i16 { fn as_sample_format(_: Option<i16>) -> u64 { 0x00000008 } }
+impl PaType for i8 { fn as_sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
+impl PaType for u8 { fn as_sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
+
+pub struct PaStream<T>
 {
-    pub fn open_easy_stream(sample_rate: f64,
-                           frames_per_buffer: u64,
-                           callback: PaStreamCallback) -> Result<PaStream, PaError>
+    pa_stream: *mut ll::PaStream,
+    _callback: Box<PaStreamUserData<T>>,
+}
+
+impl<T: PaType> PaStream<T>
+{
+    pub fn open_default_stream(num_input_channels: uint,
+                               num_output_channels: uint,
+                               sample_rate: f64,
+                               frames_per_buffer: u64,
+                               callback: PaStreamCallback<T>)
+                              -> Result<PaStream<T>, PaError>
     {
         unsafe
         {
+            let userdata = box PaStreamUserData
+            {
+                num_input: num_input_channels,
+                num_output: num_output_channels,
+                callback: callback,
+            };
             let mut pa_stream = ::std::ptr::mut_null();
-            let user_data: *mut ::libc::c_void = ::std::mem::transmute(box callback);
-            let callback_pointer = user_data.clone();
+
+            let ud_pointer: *mut ::libc::c_void = ::std::mem::transmute(userdata);
+            let ud_pointer_2 = ud_pointer.clone();
             let code = ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
-                                                0,
-                                                2,
-                                                1,
+                                                num_input_channels as i32,
+                                                num_output_channels as i32,
+                                                PaType::as_sample_format(None::<T>),
                                                 sample_rate,
                                                 frames_per_buffer,
-                                                stream_callback,
-                                                user_data);
+                                                stream_callback::<T>,
+                                                ud_pointer);
             match to_pa_result(code)
             {
                 Ok(()) => Ok(PaStream { pa_stream: pa_stream,
-                                        _callback: ::std::mem::transmute(callback_pointer)
+                                        _callback: ::std::mem::transmute(ud_pointer_2)
                              }),
                 Err(v) => Err(v),
             }
@@ -189,7 +208,7 @@ impl PaStream
         to_pa_result(unsafe { ll::Pa_AbortStream(self.pa_stream) })
     }
 
-    pub fn close(&self) -> PaResult
+    fn close(&self) -> PaResult
     {
         to_pa_result(unsafe { ll::Pa_CloseStream(self.pa_stream) })
     }
@@ -214,7 +233,7 @@ impl PaStream
 }
 
 #[unsafe_destructor]
-impl Drop for PaStream
+impl<T: PaType> Drop for PaStream<T>
 {
     fn drop(&mut self)
     {
