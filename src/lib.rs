@@ -8,6 +8,7 @@ extern crate libc;
 pub mod stream;
 pub mod pa;
 pub mod hostapi;
+pub mod device;
 
 mod ll;
 mod util;
