@@ -1,6 +1,7 @@
 use ll;
 use pa;
 use pa::{PaError, PaResult};
+use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration};
 use std::raw::Slice;
 use std::mem;
@@ -80,12 +81,12 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
     result as i32
 }
 
-trait PaType { fn as_sample_format(_: Option<Self>) -> u64; }
-impl PaType for f32 { fn as_sample_format(_: Option<f32>) -> u64 { 0x00000001 } }
-impl PaType for i32 { fn as_sample_format(_: Option<i32>) -> u64 { 0x00000002 } }
-impl PaType for i16 { fn as_sample_format(_: Option<i16>) -> u64 { 0x00000008 } }
-impl PaType for i8 { fn as_sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
-impl PaType for u8 { fn as_sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
+trait SampleType { fn as_sample_format(_: Option<Self>) -> u64; }
+impl SampleType for f32 { fn as_sample_format(_: Option<f32>) -> u64 { 0x00000001 } }
+impl SampleType for i32 { fn as_sample_format(_: Option<i32>) -> u64 { 0x00000002 } }
+impl SampleType for i16 { fn as_sample_format(_: Option<i16>) -> u64 { 0x00000008 } }
+impl SampleType for i8 { fn as_sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
+impl SampleType for u8 { fn as_sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
 
 pub struct Stream<'a, T>
 {
@@ -95,7 +96,7 @@ pub struct Stream<'a, T>
     _callback: Box<StreamUserData<'a, T>>,
 }
 
-impl<'a, T: PaType> Stream<'a, T>
+impl<'a, T: SampleType> Stream<'a, T>
 {
     pub fn open_default_stream(num_input_channels: uint,
                                num_output_channels: uint,
@@ -119,7 +120,7 @@ impl<'a, T: PaType> Stream<'a, T>
             let code = ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
                                                 num_input_channels as i32,
                                                 num_output_channels as i32,
-                                                PaType::as_sample_format(None::<T>),
+                                                SampleType::as_sample_format(None::<T>),
                                                 sample_rate,
                                                 frames_per_buffer,
                                                 stream_callback::<T>,
@@ -224,10 +225,20 @@ impl<'a, T: PaType> Stream<'a, T>
         let time = unsafe { ll::Pa_GetStreamTime(self.pa_stream) };
         pa_time_to_duration(time)
     }
+
+    pub fn info(&self) -> Option<StreamInfo>
+    {
+        unsafe
+        {
+            ll::Pa_GetStreamInfo(self.pa_stream)
+                .to_option()
+                .map(|s| StreamInfo::from_ll(s))
+        }
+    }
 }
 
 #[unsafe_destructor]
-impl<'a, T: PaType> Drop for Stream<'a, T>
+impl<'a, T: SampleType> Drop for Stream<'a, T>
 {
     fn drop(&mut self)
     {
@@ -236,5 +247,52 @@ impl<'a, T: PaType> Drop for Stream<'a, T>
             Err(v) => error!("Error: {}", v),
             Ok(_) => {},
         };
+    }
+}
+
+pub struct StreamParameters<T>
+{
+    pub device: DeviceIndex,
+    pub channel_count: uint,
+    pub suggested_latency: Duration,
+}
+
+impl<T: SampleType> StreamParameters<T>
+{
+    fn to_ll(&self) -> ll::Struct_PaStreamParameters
+    {
+        ll::Struct_PaStreamParameters
+        {
+            device: self.device as i32,
+            channelCount: self.channel_count as i32,
+            sampleFormat: SampleType::as_sample_format(None::<T>),
+            suggestedLatency: self.suggested_latency.num_milliseconds() as f64 / 1000.0,
+            hostApiSpecificStreamInfo: ::std::ptr::mut_null(),
+        }
+    }
+}
+
+pub fn is_format_supported<I: SampleType, O: SampleType>(input: StreamParameters<I>, output: StreamParameters<O>, sample_rate: f64) -> PaResult
+{
+    to_pa_result(unsafe { ll::Pa_IsFormatSupported(&input.to_ll(), &output.to_ll(), sample_rate) })
+}
+
+pub struct StreamInfo
+{
+    pub input_latency: Duration,
+    pub output_latency: Duration,
+    pub sample_rate: f64,
+}
+
+impl StreamInfo
+{
+    fn from_ll(data: &ll::PaStreamInfo) -> StreamInfo
+    {
+        StreamInfo
+        {
+            input_latency: pa_time_to_duration(data.inputLatency),
+            output_latency: pa_time_to_duration(data.outputLatency),
+            sample_rate: data.sampleRate,
+        }
     }
 }
