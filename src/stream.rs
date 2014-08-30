@@ -13,13 +13,13 @@ pub enum StreamCallbackResult
     Abort = ll::paAbort,
 }
 
-pub type StreamCallback<T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo, StreamFlags|:'static -> StreamCallbackResult;
+pub type StreamCallback<'a, T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo, StreamFlags|:'a -> StreamCallbackResult;
 
-struct StreamUserData<T>
+struct StreamUserData<'a, T>
 {
     num_input: uint,
     num_output: uint,
-    callback: StreamCallback<T>,
+    callback: StreamCallback<'a, T>,
 }
 
 pub struct StreamTimeInfo
@@ -86,20 +86,20 @@ impl PaType for i16 { fn as_sample_format(_: Option<i16>) -> u64 { 0x00000008 } 
 impl PaType for i8 { fn as_sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
 impl PaType for u8 { fn as_sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
 
-pub struct Stream<T>
+pub struct Stream<'a, T>
 {
     pa_stream: *mut ll::PaStream,
-    _callback: Box<StreamUserData<T>>,
+    _callback: Box<StreamUserData<'a, T>>,
 }
 
-impl<T: PaType> Stream<T>
+impl<'a, T: PaType> Stream<'a, T>
 {
     pub fn open_default_stream(num_input_channels: uint,
                                num_output_channels: uint,
                                sample_rate: f64,
                                frames_per_buffer: u64,
-                               callback: StreamCallback<T>)
-                              -> Result<Stream<T>, PaError>
+                               callback: StreamCallback<'a, T>)
+                              -> Result<Stream<'a, T>, PaError>
     {
         unsafe
         {
@@ -171,7 +171,7 @@ impl<T: PaType> Stream<T>
 }
 
 #[unsafe_destructor]
-impl<T: PaType> Drop for Stream<T>
+impl<'a, T: PaType> Drop for Stream<'a, T>
 {
     fn drop(&mut self)
     {
