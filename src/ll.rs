@@ -196,5 +196,7 @@ extern "C" {
     pub fn Pa_GetStreamWriteAvailable(stream: *mut PaStream) ->
      ::libc::c_long;
     pub fn Pa_GetSampleSize(format: PaSampleFormat) -> PaError;
-    pub fn Pa_Sleep(msec: ::libc::c_long);
+
+    // Unused functions
+    //pub fn Pa_Sleep(msec: ::libc::c_long);
 }

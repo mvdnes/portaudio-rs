@@ -1,4 +1,5 @@
 use ll;
+use pa;
 use pa::{PaError, PaResult};
 use util::to_pa_result;
 use std::raw::Slice;
@@ -89,6 +90,8 @@ impl PaType for u8 { fn as_sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
 pub struct Stream<'a, T>
 {
     pa_stream: *mut ll::PaStream,
+    inputs: uint,
+    outputs: uint,
     _callback: Box<StreamUserData<'a, T>>,
 }
 
@@ -124,7 +127,9 @@ impl<'a, T: PaType> Stream<'a, T>
             match to_pa_result(code)
             {
                 Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                        _callback: ::std::mem::transmute(ud_pointer_2)
+                                      _callback: ::std::mem::transmute(ud_pointer_2),
+                                      inputs: num_input_channels,
+                                      outputs: num_output_channels,
                              }),
                 Err(v) => Err(v),
             }
@@ -167,6 +172,57 @@ impl<'a, T: PaType> Stream<'a, T>
             1 => Ok(true),
             n => to_pa_result(n).map(|_| false),
         }
+    }
+
+    pub fn read_available(&self) -> Result<uint, PaError>
+    {
+        match unsafe { ll::Pa_GetStreamReadAvailable(self.pa_stream) }
+        {
+            n if n >= 0 => { Ok(n as uint) },
+            n => to_pa_result(n as i32).map(|_| 0),
+        }
+    }
+
+    pub fn write_available(&self) -> Result<uint, PaError>
+    {
+        match unsafe { ll::Pa_GetStreamWriteAvailable(self.pa_stream) }
+        {
+            n if n >= 0 => { Ok(n as uint) },
+            n => to_pa_result(n as i32).map(|_| 0),
+        }
+    }
+
+    pub fn write(&self, buffer: &[T]) -> PaResult
+    {
+        if self.outputs == 0 { return Err(pa::CanNotWriteToAnInputOnlyStream) }
+
+        let Slice { data, len } = unsafe { mem::transmute::<&[T], Slice<T>>(buffer) };
+        let buffer = data as *const ::libc::c_void;
+        let frames = (len / self.outputs) as u64;
+
+        to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, buffer, frames) })
+    }
+
+    pub fn read(&self, buffer: &mut [T]) -> PaResult
+    {
+        if self.inputs == 0 { return Err(pa::CanNotReadFromAnOutputOnlyStream) }
+
+        let Slice { data, len } = unsafe { mem::transmute::<&mut [T], Slice<T>>(buffer) };
+        let buffer = data as *mut ::libc::c_void;
+        let frames = (len / self.inputs) as u64;
+
+        to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, buffer, frames) })
+    }
+
+    pub fn cpu_load(&self) -> f64
+    {
+        unsafe { ll::Pa_GetStreamCpuLoad(self.pa_stream) }
+    }
+
+    pub fn time(&self) -> Duration
+    {
+        let time = unsafe { ll::Pa_GetStreamTime(self.pa_stream) };
+        Duration::seconds(time as i64)
     }
 }
 
