@@ -5,6 +5,7 @@
 extern crate libc;
 #[phase(plugin, link)] extern crate log;
 
+pub mod stream;
 pub mod pa;
 
 mod ll;

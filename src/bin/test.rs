@@ -1,6 +1,7 @@
 extern crate portaudio;
 
 use portaudio::pa;
+use portaudio::stream;
 
 fn main()
 {
@@ -14,7 +15,7 @@ fn main()
 
 fn doit()
 {
-    let callback = |_input: &[f32], output: &mut [f32]| -> pa::PaStreamCallbackResult
+    let callback = |_input: &[f32], output: &mut [f32]| -> stream::StreamCallbackResult
     {
         static mut lp: f32 = 0.0;
         static mut rp: f32 = 0.0;
@@ -37,10 +38,10 @@ fn doit()
         unsafe { lp = left_phase; }
         unsafe { rp = right_phase; }
 
-        pa::Continue
+        stream::Continue
     };
 
-    let stream = match pa::PaStream::open_default_stream(0, 2, 44100f64, 0, callback)
+    let stream = match stream::Stream::open_default_stream(0, 2, 44100f64, 0, callback)
     {
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
