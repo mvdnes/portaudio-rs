@@ -1,7 +1,9 @@
 use ll;
-use pa::{PaError, PaResult, to_pa_result};
+use pa::{PaError, PaResult};
+use util::to_pa_result;
 use std::raw::Slice;
 use std::mem;
+use std::time::duration::Duration;
 
 #[repr(u32)]
 pub enum StreamCallbackResult
@@ -11,12 +13,26 @@ pub enum StreamCallbackResult
     Abort = ll::paAbort,
 }
 
-pub type StreamCallback<T> = |input: &[T], output: &mut [T]|:'static -> StreamCallbackResult;
+pub type StreamCallback<T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo|:'static -> StreamCallbackResult;
+
+struct StreamUserData<T>
+{
+    num_input: uint,
+    num_output: uint,
+    callback: StreamCallback<T>,
+}
+
+pub struct StreamTimeInfo
+{
+    pub input_adc_time: Duration,
+    pub current_time: Duration,
+    pub output_dac_time: Duration,
+}
 
 extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
                               output: *mut ::libc::c_void,
                               frame_count: ::libc::c_ulong,
-                              _time_info: *const ll::PaStreamCallbackTimeInfo,
+                              time_info: *const ll::PaStreamCallbackTimeInfo,
                               _status_flags: ll::PaStreamCallbackFlags,
                               user_data: *mut ::libc::c_void) -> ::libc::c_int
 {
@@ -34,18 +50,21 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
         )
     };
 
-    let result = (stream_data.callback)(input_buffer, output_buffer);
+    let timeinfo = match unsafe { time_info.to_option() }
+    {
+        Some(ref info) => StreamTimeInfo { input_adc_time: Duration::seconds(info.inputBufferAdcTime as i64),
+                                           current_time: Duration::seconds(info.currentTime as i64),
+                                           output_dac_time: Duration::seconds(info.outputBufferDacTime as i64) },
+        None => StreamTimeInfo { input_adc_time: Duration::seconds(0),
+                                 current_time: Duration::seconds(0),
+                                 output_dac_time: Duration::seconds(0), },
+    };
+
+    let result = (stream_data.callback)(input_buffer, output_buffer, timeinfo);
 
     unsafe { mem::forget(stream_data); }
 
     result as i32
-}
-
-struct StreamUserData<T>
-{
-    num_input: uint,
-    num_output: uint,
-    callback: StreamCallback<T>,
 }
 
 trait PaType { fn as_sample_format(_: Option<Self>) -> u64; }
