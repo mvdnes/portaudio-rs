@@ -13,7 +13,7 @@ pub enum StreamCallbackResult
     Abort = ll::paAbort,
 }
 
-pub type StreamCallback<T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo|:'static -> StreamCallbackResult;
+pub type StreamCallback<T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo, StreamFlags|:'static -> StreamCallbackResult;
 
 struct StreamUserData<T>
 {
@@ -29,11 +29,21 @@ pub struct StreamTimeInfo
     pub output_dac_time: Duration,
 }
 
+bitflags!(
+    flags StreamFlags: u64 {
+        static inputUnderflow = 0x01,
+        static inputOverflow = 0x02,
+        static outputUnderflow = 0x04,
+        static outputOverflow = 0x08,
+        static primingOutput = 0x10
+    }
+)
+
 extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
                               output: *mut ::libc::c_void,
                               frame_count: ::libc::c_ulong,
                               time_info: *const ll::PaStreamCallbackTimeInfo,
-                              _status_flags: ll::PaStreamCallbackFlags,
+                              status_flags: ll::PaStreamCallbackFlags,
                               user_data: *mut ::libc::c_void) -> ::libc::c_int
 {
     let stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
@@ -50,6 +60,8 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
         )
     };
 
+    let flags = StreamFlags::from_bits_truncate(status_flags);
+
     let timeinfo = match unsafe { time_info.to_option() }
     {
         Some(ref info) => StreamTimeInfo { input_adc_time: Duration::seconds(info.inputBufferAdcTime as i64),
@@ -60,7 +72,7 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
                                  output_dac_time: Duration::seconds(0), },
     };
 
-    let result = (stream_data.callback)(input_buffer, output_buffer, timeinfo);
+    let result = (stream_data.callback)(input_buffer, output_buffer, timeinfo, flags);
 
     unsafe { mem::forget(stream_data); }
 

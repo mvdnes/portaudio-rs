@@ -15,7 +15,7 @@ fn main()
 
 fn doit()
 {
-    let callback = |_input: &[f32], output: &mut [f32], _stream: stream::StreamTimeInfo| -> stream::StreamCallbackResult
+    let callback = |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamFlags| -> stream::StreamCallbackResult
     {
         static mut lp: f32 = 0.0;
         static mut rp: f32 = 0.0;
