@@ -1,7 +1,7 @@
 use ll;
 use pa;
 use pa::{PaError, PaResult};
-use util::to_pa_result;
+use util::{to_pa_result, pa_time_to_duration};
 use std::raw::Slice;
 use std::mem;
 use std::time::duration::Duration;
@@ -65,9 +65,9 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
 
     let timeinfo = match unsafe { time_info.to_option() }
     {
-        Some(ref info) => StreamTimeInfo { input_adc_time: Duration::seconds(info.inputBufferAdcTime as i64),
-                                           current_time: Duration::seconds(info.currentTime as i64),
-                                           output_dac_time: Duration::seconds(info.outputBufferDacTime as i64) },
+        Some(ref info) => StreamTimeInfo { input_adc_time: pa_time_to_duration(info.inputBufferAdcTime),
+                                           current_time: pa_time_to_duration(info.currentTime),
+                                           output_dac_time: pa_time_to_duration(info.outputBufferDacTime) },
         None => StreamTimeInfo { input_adc_time: Duration::seconds(0),
                                  current_time: Duration::seconds(0),
                                  output_dac_time: Duration::seconds(0), },
@@ -222,7 +222,7 @@ impl<'a, T: PaType> Stream<'a, T>
     pub fn time(&self) -> Duration
     {
         let time = unsafe { ll::Pa_GetStreamTime(self.pa_stream) };
-        Duration::seconds(time as i64)
+        pa_time_to_duration(time)
     }
 }
 
