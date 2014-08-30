@@ -1,0 +1,8 @@
+[package]
+
+name = "portaudio"
+version = "0.0.1"
+authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
+
+[[bin]]
+name = "test"

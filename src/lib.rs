@@ -1,0 +1,10 @@
+#![crate_type = "lib"]
+#![crate_name = "portaudio"]
+#![feature(phase, unsafe_destructor)]
+
+extern crate libc;
+#[phase(plugin, link)] extern crate log;
+
+pub mod pa;
+
+mod ll;
