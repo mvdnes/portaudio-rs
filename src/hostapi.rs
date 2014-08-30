@@ -110,7 +110,7 @@ pub fn get_default_index() -> Result<HostApiIndex, PaError>
     }
 }
 
-pub fn get_info(index: uint) -> Option<HostApiInfo>
+pub fn get_info(index: HostApiIndex) -> Option<HostApiInfo>
 {
     unsafe
     {

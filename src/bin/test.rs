@@ -1,16 +1,51 @@
 extern crate portaudio;
 
-use portaudio::pa;
-use portaudio::stream;
+use portaudio::{pa, stream, hostapi, device};
 
 fn main()
 {
     println!("version: {} \"{}\"", pa::version(), pa::version_text());
     println!("init: {}", pa::initialize());
- 
+
+    print_info();
     doit();
 
     println!("term: {}", pa::terminate());
+}
+
+fn print_info()
+{
+    match hostapi::get_count()
+    {
+        Ok(api_count) => {
+            for i in range(0, api_count)
+            {
+                let name = match hostapi::get_info(i)
+                {
+                    None => "???".to_string(),
+                    Some(ha) => ha.name,
+                };
+                println!("api {}: {}", i, name);
+            }
+        },
+        _ => {},
+    }
+
+    match device::get_count()
+    {
+        Ok(device_count) => {
+            for i in range(0, device_count)
+            {
+                let name = match device::get_info(i)
+                {
+                    None => "???".to_string(),
+                    Some(d) => d.name,
+                };
+                println!("dev {}: {}", i, name);
+            }
+        },
+        _ => {},
+    }
 }
 
 fn doit()
