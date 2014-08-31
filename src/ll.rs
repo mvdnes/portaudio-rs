@@ -153,13 +153,13 @@ extern "C" {
                          sampleRate: ::libc::c_double,
                          framesPerBuffer: ::libc::c_ulong,
                          streamFlags: PaStreamFlags,
-                         streamCallback: extern "C" fn(arg1: *const ::libc::c_void,
+                         streamCallback: Option<extern "C" fn(arg1: *const ::libc::c_void,
                                                        arg2: *mut ::libc::c_void,
                                                        arg3: ::libc::c_ulong,
                                                        arg4: *const PaStreamCallbackTimeInfo,
                                                        arg5: PaStreamCallbackFlags,
                                                        arg6: *mut ::libc::c_void)
-                                                      -> ::libc::c_int,
+                                                      -> ::libc::c_int>,
                          userData: *mut ::libc::c_void) -> PaError;
     pub fn Pa_OpenDefaultStream(stream: *mut *mut PaStream,
                                 numInputChannels: ::libc::c_int,
@@ -167,17 +167,17 @@ extern "C" {
                                 sampleFormat: PaSampleFormat,
                                 sampleRate: ::libc::c_double,
                                 framesPerBuffer: ::libc::c_ulong,
-                                streamCallback: extern "C" fn(arg1: *const ::libc::c_void,
+                                streamCallback: Option<extern "C" fn(arg1: *const ::libc::c_void,
                                                               arg2: *mut ::libc::c_void,
                                                               arg3: ::libc::c_ulong,
                                                               arg4: *const PaStreamCallbackTimeInfo,
                                                               arg5: PaStreamCallbackFlags,
                                                               arg6: *mut ::libc::c_void)
-                                                             -> ::libc::c_int,
+                                                             -> ::libc::c_int>,
                                 userData: *mut ::libc::c_void) -> PaError;
     pub fn Pa_CloseStream(stream: *mut PaStream) -> PaError;
     pub fn Pa_SetStreamFinishedCallback(stream: *mut PaStream,
-                                        streamFinishedCallback: extern "C" fn(arg1: *mut ::libc::c_void))
+                                        streamFinishedCallback: Option<extern "C" fn(arg1: *mut ::libc::c_void)>)
                                        -> PaError;
     pub fn Pa_StartStream(stream: *mut PaStream) -> PaError;
     pub fn Pa_StopStream(stream: *mut PaStream) -> PaError;

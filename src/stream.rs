@@ -21,7 +21,7 @@ struct StreamUserData<'a, T>
 {
     num_input: uint,
     num_output: uint,
-    callback: StreamCallback<'a, T>,
+    callback: Option<StreamCallback<'a, T>>,
 }
 
 pub struct StreamTimeInfo
@@ -42,13 +42,14 @@ bitflags!(
 )
 
 extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
-                              output: *mut ::libc::c_void,
-                              frame_count: ::libc::c_ulong,
-                              time_info: *const ll::PaStreamCallbackTimeInfo,
-                              status_flags: ll::PaStreamCallbackFlags,
-                              user_data: *mut ::libc::c_void) -> ::libc::c_int
+                                 output: *mut ::libc::c_void,
+                                 frame_count: ::libc::c_ulong,
+                                 time_info: *const ll::PaStreamCallbackTimeInfo,
+                                 status_flags: ll::PaStreamCallbackFlags,
+                                 user_data: *mut ::libc::c_void) -> ::libc::c_int
 {
-    let stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
+    let mut stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
+
     let input_buffer: &[T] = unsafe
     {
         mem::transmute(
@@ -74,7 +75,11 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
                                  output_dac_time: Duration::seconds(0), },
     };
 
-    let result = (stream_data.callback)(input_buffer, output_buffer, timeinfo, flags);
+    let result = match stream_data.callback
+    {
+        Some(ref mut f) => (*f)(input_buffer, output_buffer, timeinfo, flags),
+        None => Abort,
+    };
 
     unsafe { mem::forget(stream_data); }
 
@@ -106,15 +111,20 @@ pub struct Stream<'a, T>
 
 impl<'a, T: SampleType> Stream<'a, T>
 {
-    pub fn open_default_stream(num_input_channels: uint,
-                               num_output_channels: uint,
-                               sample_rate: f64,
-                               frames_per_buffer: u64,
-                               callback: StreamCallback<'a, T>)
-                              -> Result<Stream<'a, T>, PaError>
+    pub fn open_default(num_input_channels: uint,
+                        num_output_channels: uint,
+                        sample_rate: f64,
+                        frames_per_buffer: u64,
+                        callback: Option<StreamCallback<'a, T>>)
+                       -> Result<Stream<'a, T>, PaError>
     {
         unsafe
         {
+            let callback_pointer = match callback
+            {
+                Some(_) => Some(stream_callback::<T>),
+                None => None,
+            };
             let userdata = box StreamUserData
             {
                 num_input: num_input_channels,
@@ -131,7 +141,7 @@ impl<'a, T: SampleType> Stream<'a, T>
                                                 get_sample_format::<T>(),
                                                 sample_rate,
                                                 frames_per_buffer,
-                                                stream_callback::<T>,
+                                                callback_pointer,
                                                 ud_pointer);
             match to_pa_result(code)
             {
@@ -205,22 +215,20 @@ impl<'a, T: SampleType> Stream<'a, T>
     {
         if self.outputs == 0 { return Err(pa::CanNotWriteToAnInputOnlyStream) }
 
-        let Slice { data, len } = unsafe { mem::transmute::<&[T], Slice<T>>(buffer) };
-        let buffer = data as *const ::libc::c_void;
-        let frames = (len / self.outputs) as u64;
+        let pointer = buffer.as_ptr() as *const ::libc::c_void;
+        let frames = (buffer.len() / self.outputs) as u64;
 
-        to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, buffer, frames) })
+        to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
     }
 
     pub fn read(&self, buffer: &mut [T]) -> PaResult
     {
         if self.inputs == 0 { return Err(pa::CanNotReadFromAnOutputOnlyStream) }
 
-        let Slice { data, len } = unsafe { mem::transmute::<&mut [T], Slice<T>>(buffer) };
-        let buffer = data as *mut ::libc::c_void;
-        let frames = (len / self.inputs) as u64;
+        let pointer = buffer.as_mut_ptr() as *mut ::libc::c_void;
+        let frames = (buffer.len() / self.inputs) as u64;
 
-        to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, buffer, frames) })
+        to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, pointer, frames) })
     }
 
     pub fn cpu_load(&self) -> f64

@@ -50,6 +50,12 @@ fn print_info()
 
 fn doit()
 {
+    callback_demo();
+    write_demo();
+}
+
+fn callback_demo()
+{
     let callback = |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamFlags| -> stream::StreamCallbackResult
     {
         static mut lp: f32 = 0.0;
@@ -66,7 +72,7 @@ fn doit()
             left_phase += 0.01;
             if left_phase >= 1.0 { left_phase -= 2.0; }
 
-            right_phase += 0.3;
+            right_phase += 0.03;
             if right_phase >= 1.0 { right_phase -= 2.0; }
         }
 
@@ -76,16 +82,44 @@ fn doit()
         stream::Continue
     };
 
-    let stream = match stream::Stream::open_default_stream(0, 2, 44100f64, 0, callback)
+    let stream = match stream::Stream::open_default(0, 2, 44100f64, 0, Some(callback))
     {
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
     };
-
     println!("start: {}", stream.start());
     std::io::timer::sleep(std::time::duration::Duration::seconds(1));
     println!("stopped? {}", stream.is_stopped());
     println!("active? {}", stream.is_active());
     std::io::timer::sleep(std::time::duration::Duration::seconds(1));
     println!("stop: {}", stream.stop());
+}
+
+fn write_demo()
+{
+    let stream = match stream::Stream::open_default(0, 2, 44100f64, 0, None::<stream::StreamCallback<f32>>)
+    {
+        Err(v) => { println!("Err({})", v); return },
+        Ok(stream) => stream,
+    };
+    println!("start: {}", stream.start());
+    println!("write: {}", stream.write(get_buffer(44100*3).as_slice()));
+    println!("stop: {}", stream.stop());
+}
+
+fn get_buffer(len: uint) -> Vec<f32>
+{
+    let mut left = 0.0f32;
+    let mut right = 0.0f32;
+    let mut result = Vec::with_capacity(len);
+    for i in range(0, len / 2)
+    {
+        result.push(left);
+        result.push(right);
+        left += 0.01;
+        right += 0.03;
+        if left >= 1.0 { left -= 2.0; }
+        if right >= 1.0 { right -= 2.0; }
+    }
+    result
 }
