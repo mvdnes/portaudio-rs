@@ -1,11 +1,11 @@
 use ll;
-use pa;
 use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration};
 use std::raw::Slice;
 use std::mem;
 use std::time::duration::Duration;
+use libc::c_void;
 
 #[repr(u32)]
 pub enum StreamCallbackResult
@@ -53,12 +53,12 @@ bitflags!(
     }
 )
 
-extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
-                                 output: *mut ::libc::c_void,
+extern "C" fn stream_callback<T>(input: *const c_void,
+                                 output: *mut c_void,
                                  frame_count: ::libc::c_ulong,
                                  time_info: *const ll::PaStreamCallbackTimeInfo,
                                  status_flags: ll::PaStreamCallbackFlags,
-                                 user_data: *mut ::libc::c_void) -> ::libc::c_int
+                                 user_data: *mut c_void) -> ::libc::c_int
 {
     let mut stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
 
@@ -98,7 +98,7 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
     result as i32
 }
 
-extern "C" fn stream_finished_callback<T>(user_data: *mut ::libc::c_void)
+extern "C" fn stream_finished_callback<T>(user_data: *mut c_void)
 {
     let mut stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
     match stream_data.finished_callback
@@ -167,7 +167,7 @@ impl<'a, T: SampleType> Stream<'a, T>
             };
             let mut pa_stream = ::std::ptr::mut_null();
 
-            let ud_pointer: *mut ::libc::c_void = ::std::mem::transmute(userdata);
+            let ud_pointer: *mut c_void = mem::transmute(userdata);
             let ud_pointer_2 = ud_pointer.clone();
             let code = ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
                                                 num_input_channels as i32,
@@ -180,7 +180,7 @@ impl<'a, T: SampleType> Stream<'a, T>
             match to_pa_result(code)
             {
                 Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                      user_data: ::std::mem::transmute(ud_pointer_2),
+                                      user_data: mem::transmute(ud_pointer_2),
                                       inputs: num_input_channels,
                                       outputs: num_output_channels,
                              }),
@@ -214,7 +214,7 @@ impl<'a, T: SampleType> Stream<'a, T>
             };
 
             let mut pa_stream = ::std::ptr::mut_null();
-            let ud_pointer: *mut ::libc::c_void = mem::transmute(user_data);
+            let ud_pointer: *mut c_void = mem::transmute(user_data);
             let ud_pointer_2 = ud_pointer.clone();
 
             let result = ll::Pa_OpenStream(&mut pa_stream,
@@ -295,9 +295,9 @@ impl<'a, T: SampleType> Stream<'a, T>
 
     pub fn write(&self, buffer: &[T]) -> PaResult
     {
-        if self.outputs == 0 { return Err(pa::CanNotWriteToAnInputOnlyStream) }
+        if self.outputs == 0 { return Err(::pa::CanNotWriteToAnInputOnlyStream) }
 
-        let pointer = buffer.as_ptr() as *const ::libc::c_void;
+        let pointer = buffer.as_ptr() as *const c_void;
         let frames = (buffer.len() / self.outputs) as u64;
 
         to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
@@ -305,9 +305,9 @@ impl<'a, T: SampleType> Stream<'a, T>
 
     pub fn read(&self, buffer: &mut [T]) -> PaResult
     {
-        if self.inputs == 0 { return Err(pa::CanNotReadFromAnOutputOnlyStream) }
+        if self.inputs == 0 { return Err(::pa::CanNotReadFromAnOutputOnlyStream) }
 
-        let pointer = buffer.as_mut_ptr() as *mut ::libc::c_void;
+        let pointer = buffer.as_mut_ptr() as *mut c_void;
         let frames = (buffer.len() / self.inputs) as u64;
 
         to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, pointer, frames) })
@@ -440,12 +440,12 @@ mod test
     fn option_pointer()
     {
         use std::{mem, ptr};
-        use libc;
+        use libc::c_void;
 
         unsafe
         {
-            assert!   (mem::transmute::<Option<extern "C" fn()>, *const libc::c_void>(Some(external_function)) != ptr::null());
-            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const libc::c_void>(None)                    ,  ptr::null());
+            assert!   (mem::transmute::<Option<extern "C" fn()>, *const c_void>(Some(external_function)) != ptr::null());
+            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(None)                    ,  ptr::null());
         }
     }
 
