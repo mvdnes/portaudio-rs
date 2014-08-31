@@ -6,3 +6,5 @@ authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
 
 [[bin]]
 name = "test"
+test = false
+doc = false

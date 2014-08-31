@@ -81,12 +81,20 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
     result as i32
 }
 
-trait SampleType { fn as_sample_format(_: Option<Self>) -> u64; }
-impl SampleType for f32 { fn as_sample_format(_: Option<f32>) -> u64 { 0x00000001 } }
-impl SampleType for i32 { fn as_sample_format(_: Option<i32>) -> u64 { 0x00000002 } }
-impl SampleType for i16 { fn as_sample_format(_: Option<i16>) -> u64 { 0x00000008 } }
-impl SampleType for i8 { fn as_sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
-impl SampleType for u8 { fn as_sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
+trait SampleType
+{
+    fn sample_format(_: Option<Self>) -> u64;
+}
+impl SampleType for f32 { fn sample_format(_: Option<f32>) -> u64 { 0x00000001 } }
+impl SampleType for i32 { fn sample_format(_: Option<i32>) -> u64 { 0x00000002 } }
+impl SampleType for i16 { fn sample_format(_: Option<i16>) -> u64 { 0x00000008 } }
+impl SampleType for i8 { fn sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
+impl SampleType for u8 { fn sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
+
+fn get_sample_format<T: SampleType>() -> u64
+{
+    SampleType::sample_format(None::<T>)
+}
 
 pub struct Stream<'a, T>
 {
@@ -120,7 +128,7 @@ impl<'a, T: SampleType> Stream<'a, T>
             let code = ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
                                                 num_input_channels as i32,
                                                 num_output_channels as i32,
-                                                SampleType::as_sample_format(None::<T>),
+                                                get_sample_format::<T>(),
                                                 sample_rate,
                                                 frames_per_buffer,
                                                 stream_callback::<T>,
@@ -265,7 +273,7 @@ impl<T: SampleType> StreamParameters<T>
         {
             device: self.device as i32,
             channelCount: self.channel_count as i32,
-            sampleFormat: SampleType::as_sample_format(None::<T>),
+            sampleFormat: get_sample_format::<T>(),
             suggestedLatency: self.suggested_latency.num_milliseconds() as f64 / 1000.0,
             hostApiSpecificStreamInfo: ::std::ptr::mut_null(),
         }
@@ -294,5 +302,32 @@ impl StreamInfo
             output_latency: pa_time_to_duration(data.outputLatency),
             sample_rate: data.sampleRate,
         }
+    }
+}
+
+#[cfg(test)]
+mod test
+{
+    use super::SampleType;
+
+    #[test]
+    fn sample_sizes()
+    {
+        test_sample_size::<f32>();
+        test_sample_size::<i32>();
+        test_sample_size::<i16>();
+        test_sample_size::<i8>();
+        test_sample_size::<u8>();
+    }
+
+    fn test_sample_size<T: SampleType>()
+    {
+        use ll;
+        use std::mem;
+
+        let format = super::get_sample_format::<T>();
+        let pa_size = unsafe { ll::Pa_GetSampleSize(format) } as uint;
+        let rs_size = mem::size_of::<T>();
+        assert_eq!(rs_size, pa_size);
     }
 }
