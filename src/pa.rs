@@ -1,25 +1,35 @@
+//! General utilities for PortAudio
+
 use util::to_pa_result;
 use ll;
 use std::fmt;
 use std::c_str::CString;
 
+/// PortAudio version
 pub fn version() -> int
 {
     let version = unsafe { ll::Pa_GetVersion() };
     version as int
 }
 
+/// Human-readable PortAudio version
 pub fn version_text() -> String
 {
     let version = unsafe { CString::new(ll::Pa_GetVersionText(), false) };
     format!("{}", version)
 }
 
+/// Initialize the PortAudio API
+///
+/// Each successful call must be matched by a call to terminate
 pub fn initialize() -> PaResult
 {
     to_pa_result(unsafe { ll::Pa_Initialize() })
 }
 
+/// Terminate the PortAudio API
+///
+/// Call this function exactly once for each successful call to initialize
 pub fn terminate() -> PaResult
 {
     to_pa_result(unsafe { ll::Pa_Terminate() })
@@ -27,6 +37,9 @@ pub fn terminate() -> PaResult
 
 // PaError and PaResult
 
+/// Enum for all possible errors given by PortAudio
+///
+/// The NoError value (0) is not present since the Result type can be used then.
 #[repr(i32)]
 #[deriving(FromPrimitive, PartialEq)]
 pub enum PaError
@@ -61,6 +74,8 @@ pub enum PaError
     CanNotWriteToAnInputOnlyStream = ll::paCanNotWriteToAnInputOnlyStream,
     IncompatibleStreamHostApi = ll::paIncompatibleStreamHostApi,
     BadBufferPtr = ll::paBadBufferPtr,
+
+    /// Added variant for when FromPrimitive returns None
     UnknownError,
 }
 
@@ -79,4 +94,7 @@ impl fmt::Show for PaError
     }
 }
 
+/// A result type wrapping PaError.
+///
+/// The original NoError is mapped to Ok(()) and other values mapped to Err(x)
 pub type PaResult = Result<(), PaError>;
