@@ -28,7 +28,7 @@ pub fn terminate() -> PaResult
 // PaError and PaResult
 
 #[repr(i32)]
-#[deriving(FromPrimitive)]
+#[deriving(FromPrimitive, PartialEq)]
 pub enum PaError
 {
     // paNoError is not present in this enum

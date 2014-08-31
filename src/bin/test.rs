@@ -56,7 +56,7 @@ fn doit()
 
 fn callback_demo()
 {
-    let callback = |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamFlags| -> stream::StreamCallbackResult
+    let callback = |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
     {
         static mut lp: f32 = 0.0;
         static mut rp: f32 = 0.0;
@@ -82,15 +82,18 @@ fn callback_demo()
         stream::Continue
     };
 
-    let stream = match stream::Stream::open_default(0, 2, 44100f64, 0, Some(callback))
+    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, 0, Some(callback))
     {
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
     };
+    println!("finished_callback: {}", stream.set_finished_callback(|| println!("Finished callback called")));
     println!("start: {}", stream.start());
     std::io::timer::sleep(std::time::duration::Duration::seconds(1));
-    println!("stopped? {}", stream.is_stopped());
-    println!("active? {}", stream.is_active());
+    println!("stop: {}", stream.stop());
+
+    println!("finished_callback: {}", stream.unset_finished_callback());
+    println!("start: {}", stream.start());
     std::io::timer::sleep(std::time::duration::Duration::seconds(1));
     println!("stop: {}", stream.stop());
 }
@@ -102,6 +105,7 @@ fn write_demo()
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
     };
+
     println!("start: {}", stream.start());
     println!("write: {}", stream.write(get_buffer(44100*3).as_slice()));
     println!("stop: {}", stream.stop());
@@ -116,8 +120,8 @@ fn get_buffer(len: uint) -> Vec<f32>
     {
         result.push(left);
         result.push(right);
-        left += 0.01;
-        right += 0.03;
+        left += 0.03;
+        right += 0.01;
         if left >= 1.0 { left -= 2.0; }
         if right >= 1.0 { right -= 2.0; }
     }

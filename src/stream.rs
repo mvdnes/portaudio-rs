@@ -15,13 +15,15 @@ pub enum StreamCallbackResult
     Abort = ll::paAbort,
 }
 
-pub type StreamCallback<'a, T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo, StreamFlags|:'a -> StreamCallbackResult;
+pub type StreamCallback<'a, T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo, StreamCallbackFlags|:'a -> StreamCallbackResult;
+pub type StreamFinishedCallback<'a> = ||:'a;
 
 struct StreamUserData<'a, T>
 {
     num_input: uint,
     num_output: uint,
     callback: Option<StreamCallback<'a, T>>,
+    finished_callback: Option<StreamFinishedCallback<'a>>,
 }
 
 pub struct StreamTimeInfo
@@ -32,12 +34,22 @@ pub struct StreamTimeInfo
 }
 
 bitflags!(
-    flags StreamFlags: u64 {
+    flags StreamCallbackFlags: u64 {
         static inputUnderflow = 0x01,
         static inputOverflow = 0x02,
         static outputUnderflow = 0x04,
         static outputOverflow = 0x08,
         static primingOutput = 0x10
+    }
+)
+
+bitflags!(
+    flags StreamFlags: u64 {
+        static ClipOff                               = 0x00000001,
+        static DitherOff                             = 0x00000002,
+        static NeverDropInput                        = 0x00000004,
+        static PrimeOutputBuffersUsingStreamCallback = 0x00000008,
+        static PlatformSpecific                      = 0xFFFF0000
     }
 )
 
@@ -63,7 +75,7 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
         )
     };
 
-    let flags = StreamFlags::from_bits_truncate(status_flags);
+    let flags = StreamCallbackFlags::from_bits_truncate(status_flags);
 
     let timeinfo = match unsafe { time_info.to_option() }
     {
@@ -86,6 +98,16 @@ extern "C" fn stream_callback<T>(input: *const ::libc::c_void,
     result as i32
 }
 
+extern "C" fn stream_finished_callback<T>(user_data: *mut ::libc::c_void)
+{
+    let mut stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
+    match stream_data.finished_callback
+    {
+        Some(ref mut f) => (*f)(),
+        None => {},
+    };
+}
+
 trait SampleType
 {
     fn sample_format(_: Option<Self>) -> u64;
@@ -101,12 +123,21 @@ fn get_sample_format<T: SampleType>() -> u64
     SampleType::sample_format(None::<T>)
 }
 
+pub fn get_sample_size<T: SampleType>() -> Result<uint, PaError>
+{
+    match unsafe { ll::Pa_GetSampleSize(get_sample_format::<T>()) }
+    {
+        n if n >= 0 => Ok(n as uint),
+        m => to_pa_result(m).map(|_| 0),
+    }
+}
+
 pub struct Stream<'a, T>
 {
     pa_stream: *mut ll::PaStream,
     inputs: uint,
     outputs: uint,
-    _callback: Box<StreamUserData<'a, T>>,
+    user_data: Box<StreamUserData<'a, T>>,
 }
 
 impl<'a, T: SampleType> Stream<'a, T>
@@ -130,6 +161,7 @@ impl<'a, T: SampleType> Stream<'a, T>
                 num_input: num_input_channels,
                 num_output: num_output_channels,
                 callback: callback,
+                finished_callback: None,
             };
             let mut pa_stream = ::std::ptr::mut_null();
 
@@ -146,10 +178,58 @@ impl<'a, T: SampleType> Stream<'a, T>
             match to_pa_result(code)
             {
                 Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                      _callback: ::std::mem::transmute(ud_pointer_2),
+                                      user_data: ::std::mem::transmute(ud_pointer_2),
                                       inputs: num_input_channels,
                                       outputs: num_output_channels,
                              }),
+                Err(v) => Err(v),
+            }
+        }
+    }
+
+    pub fn open(input: StreamParameters<T>,
+                output: StreamParameters<T>,
+                sample_rate: f64,
+                frames_per_buffer: u64,
+                flags: StreamFlags,
+                callback: Option<StreamCallback<'a, T>>)
+               -> Result<Stream<'a, T>, PaError>
+    {
+        unsafe
+        {
+            let callback_pointer = match callback
+            {
+                Some(_) => Some(stream_callback::<T>),
+                None => None,
+            };
+
+            let user_data = box StreamUserData
+            {
+                num_input: input.channel_count,
+                num_output: output.channel_count,
+                callback: callback,
+                finished_callback: None,
+            };
+
+            let mut pa_stream = ::std::ptr::mut_null();
+            let ud_pointer: *mut ::libc::c_void = mem::transmute(user_data);
+            let ud_pointer_2 = ud_pointer.clone();
+
+            let result = ll::Pa_OpenStream(&mut pa_stream,
+                                                  &input.to_ll(),
+                                                  &output.to_ll(),
+                                                  sample_rate,
+                                                  frames_per_buffer,
+                                                  flags.bits,
+                                                  callback_pointer,
+                                                  ud_pointer);
+            match to_pa_result(result)
+            {
+                Ok(()) => Ok(Stream { pa_stream: pa_stream,
+                                      user_data: mem::transmute(ud_pointer_2),
+                                      inputs: input.channel_count,
+                                      outputs: output.channel_count,
+                          }),
                 Err(v) => Err(v),
             }
         }
@@ -251,6 +331,18 @@ impl<'a, T: SampleType> Stream<'a, T>
                 .map(|s| StreamInfo::from_ll(s))
         }
     }
+
+    pub fn set_finished_callback(&mut self, finished_callback: StreamFinishedCallback<'a>) -> PaResult
+    {
+        self.user_data.finished_callback = Some(finished_callback);
+        let callback_pointer = Some(stream_finished_callback::<T>);
+        to_pa_result(unsafe { ll::Pa_SetStreamFinishedCallback(self.pa_stream, callback_pointer) })
+    }
+
+    pub fn unset_finished_callback(&mut self) -> PaResult
+    {
+        to_pa_result(unsafe { ll::Pa_SetStreamFinishedCallback(self.pa_stream, None) })
+    }
 }
 
 #[unsafe_destructor]
@@ -318,6 +410,8 @@ mod test
 {
     use super::SampleType;
 
+    // This test asserts that the sizes used by PortAudio are the same as
+    // those used by Rust
     #[test]
     fn sample_sizes()
     {
@@ -330,12 +424,28 @@ mod test
 
     fn test_sample_size<T: SampleType>()
     {
-        use ll;
         use std::mem;
 
-        let format = super::get_sample_format::<T>();
-        let pa_size = unsafe { ll::Pa_GetSampleSize(format) } as uint;
-        let rs_size = mem::size_of::<T>();
+        let pa_size = super::get_sample_size::<T>();
+        let rs_size = Ok(mem::size_of::<T>());
         assert_eq!(rs_size, pa_size);
     }
+
+    // In the FFI some assumptions are made as to how Some(p) and None are
+    // represented when used as function pointers. This test asserts these
+    // assumptions.
+    #[test]
+    fn option_pointer()
+    {
+        use std::{mem, ptr};
+        use libc;
+
+        unsafe
+        {
+            assert!   (mem::transmute::<Option<extern "C" fn()>, *const libc::c_void>(Some(external_function)) != ptr::null());
+            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const libc::c_void>(None)                    ,  ptr::null());
+        }
+    }
+
+    extern "C" fn external_function() {}
 }
