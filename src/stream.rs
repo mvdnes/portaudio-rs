@@ -15,14 +15,14 @@ pub enum StreamCallbackResult
     Abort = ll::paAbort,
 }
 
-pub type StreamCallback<'a, T> = |input: &[T], output: &mut [T], timeinfo: StreamTimeInfo, StreamCallbackFlags|:'a -> StreamCallbackResult;
+pub type StreamCallback<'a, I, O> = |input: &[I], output: &mut [O], timeinfo: StreamTimeInfo, StreamCallbackFlags|:'a -> StreamCallbackResult;
 pub type StreamFinishedCallback<'a> = ||:'a;
 
-struct StreamUserData<'a, T>
+struct StreamUserData<'a, I, O>
 {
     num_input: uint,
     num_output: uint,
-    callback: Option<StreamCallback<'a, T>>,
+    callback: Option<StreamCallback<'a, I, O>>,
     finished_callback: Option<StreamFinishedCallback<'a>>,
 }
 
@@ -53,25 +53,25 @@ bitflags!(
     }
 )
 
-extern "C" fn stream_callback<T>(input: *const c_void,
-                                 output: *mut c_void,
-                                 frame_count: ::libc::c_ulong,
-                                 time_info: *const ll::PaStreamCallbackTimeInfo,
-                                 status_flags: ll::PaStreamCallbackFlags,
-                                 user_data: *mut c_void) -> ::libc::c_int
+extern "C" fn stream_callback<I, O>(input: *const c_void,
+                                    output: *mut c_void,
+                                    frame_count: ::libc::c_ulong,
+                                    time_info: *const ll::PaStreamCallbackTimeInfo,
+                                    status_flags: ll::PaStreamCallbackFlags,
+                                    user_data: *mut c_void) -> ::libc::c_int
 {
-    let mut stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
+    let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
 
-    let input_buffer: &[T] = unsafe
+    let input_buffer: &[I] = unsafe
     {
         mem::transmute(
-            Slice { data: input as *const T, len: frame_count as uint * stream_data.num_input }
+            Slice { data: input as *const I, len: frame_count as uint * stream_data.num_input }
         )
     };
-    let output_buffer: &mut [T] = unsafe
+    let output_buffer: &mut [O] = unsafe
     {
         mem::transmute(
-            Slice { data: output as *const T, len: frame_count as uint * stream_data.num_output }
+            Slice { data: output as *const O, len: frame_count as uint * stream_data.num_output }
         )
     };
 
@@ -98,9 +98,9 @@ extern "C" fn stream_callback<T>(input: *const c_void,
     result as i32
 }
 
-extern "C" fn stream_finished_callback<T>(user_data: *mut c_void)
+extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
 {
-    let mut stream_data: Box<StreamUserData<T>> = unsafe { mem::transmute(user_data) };
+    let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
     match stream_data.finished_callback
     {
         Some(ref mut f) => (*f)(),
@@ -134,28 +134,28 @@ pub fn get_sample_size<T: SampleType>() -> Result<uint, PaError>
     }
 }
 
-pub struct Stream<'a, T>
+pub struct Stream<'a, I, O>
 {
     pa_stream: *mut ll::PaStream,
     inputs: uint,
     outputs: uint,
-    user_data: Box<StreamUserData<'a, T>>,
+    user_data: Box<StreamUserData<'a, I, O>>,
 }
 
-impl<'a, T: SampleType> Stream<'a, T>
+impl<'a, T: SampleType + Send> Stream<'a, T, T>
 {
     pub fn open_default(num_input_channels: uint,
                         num_output_channels: uint,
                         sample_rate: f64,
                         frames_per_buffer: u64,
-                        callback: Option<StreamCallback<'a, T>>)
-                       -> Result<Stream<'a, T>, PaError>
+                        callback: Option<StreamCallback<'a, T, T>>)
+                       -> Result<Stream<'a, T, T>, PaError>
     {
         unsafe
         {
             let callback_pointer = match callback
             {
-                Some(_) => Some(stream_callback::<T>),
+                Some(_) => Some(stream_callback::<T, T>),
                 None => None,
             };
             let userdata = box StreamUserData
@@ -188,20 +188,23 @@ impl<'a, T: SampleType> Stream<'a, T>
             }
         }
     }
+}
 
-    pub fn open(input: StreamParameters<T>,
-                output: StreamParameters<T>,
+impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
+{
+    pub fn open(input: StreamParameters<I>,
+                output: StreamParameters<O>,
                 sample_rate: f64,
                 frames_per_buffer: u64,
                 flags: StreamFlags,
-                callback: Option<StreamCallback<'a, T>>)
-               -> Result<Stream<'a, T>, PaError>
+                callback: Option<StreamCallback<'a, I, O>>)
+               -> Result<Stream<'a, I, O>, PaError>
     {
         unsafe
         {
             let callback_pointer = match callback
             {
-                Some(_) => Some(stream_callback::<T>),
+                Some(_) => Some(stream_callback::<I, O>),
                 None => None,
             };
 
@@ -293,7 +296,7 @@ impl<'a, T: SampleType> Stream<'a, T>
         }
     }
 
-    pub fn write(&self, buffer: &[T]) -> PaResult
+    pub fn write(&self, buffer: &[O]) -> PaResult
     {
         if self.outputs == 0 { return Err(::pa::CanNotWriteToAnInputOnlyStream) }
 
@@ -303,7 +306,7 @@ impl<'a, T: SampleType> Stream<'a, T>
         to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
     }
 
-    pub fn read(&self, buffer: &mut [T]) -> PaResult
+    pub fn read(&self, buffer: &mut [I]) -> PaResult
     {
         if self.inputs == 0 { return Err(::pa::CanNotReadFromAnOutputOnlyStream) }
 
@@ -337,7 +340,7 @@ impl<'a, T: SampleType> Stream<'a, T>
     pub fn set_finished_callback(&mut self, finished_callback: StreamFinishedCallback<'a>) -> PaResult
     {
         self.user_data.finished_callback = Some(finished_callback);
-        let callback_pointer = Some(stream_finished_callback::<T>);
+        let callback_pointer = Some(stream_finished_callback::<I, O>);
         to_pa_result(unsafe { ll::Pa_SetStreamFinishedCallback(self.pa_stream, callback_pointer) })
     }
 
@@ -348,7 +351,7 @@ impl<'a, T: SampleType> Stream<'a, T>
 }
 
 #[unsafe_destructor]
-impl<'a, T: SampleType> Drop for Stream<'a, T>
+impl<'a, I: SampleType + Send, O: SampleType + Send> Drop for Stream<'a, I, O>
 {
     fn drop(&mut self)
     {

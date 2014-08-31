@@ -100,7 +100,7 @@ fn callback_demo()
 
 fn write_demo()
 {
-    let stream = match stream::Stream::open_default(0, 2, 44100f64, 0, None::<stream::StreamCallback<f32>>)
+    let stream = match stream::Stream::open_default(0, 2, 44100f64, 0, None)
     {
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
