@@ -52,6 +52,7 @@ fn doit()
 {
     callback_demo();
     write_demo();
+    mixed_demo();
 }
 
 fn callback_demo()
@@ -126,4 +127,45 @@ fn get_buffer(len: uint) -> Vec<f32>
         if right >= 1.0 { right -= 2.0; }
     }
     result
+}
+
+fn mixed_demo()
+{
+    let in_idx = match device::get_default_input_index()
+    {
+        Ok(i) => i,
+        Err(_) => return,
+    };
+    let out_idx = match device::get_default_output_index()
+    {
+        Ok(o) => o,
+        Err(_) => return,
+    };
+    let in_lat = match device::get_info(in_idx)
+    {
+        None => return,
+        Some(d) => d.default_low_input_latency,
+    };
+    let out_lat = match device::get_info(out_idx)
+    {
+        None => return,
+        Some(d) => d.default_low_output_latency,
+    };
+    let input: stream::StreamParameters<f32> = stream::StreamParameters { device: in_idx, channel_count: 2, suggested_latency: in_lat };
+    let output: stream::StreamParameters<i8> = stream::StreamParameters { device: out_idx, channel_count: 2, suggested_latency: out_lat };
+
+    let supported = stream::is_format_supported(input, output, 44100f64);
+    println!("support? {}", supported);
+    if supported.is_err() { return }
+
+    let stream = match stream::Stream::open(input, output, 44100f64, 0, stream::StreamFlags::empty(), None)
+    {
+        Ok(s) => s,
+        Err(o) => { println!("stream: Err({})", o); return },
+    };
+
+    let buffer = get_buffer(2*44100).move_iter().map(|v| (v * 127.0) as i8).collect::<Vec<i8>>();
+    println!("start: {}", stream.start());
+    println!("write: {}", stream.write(buffer.as_slice()));
+    println!("stop: {}", stream.stop());
 }
