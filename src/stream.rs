@@ -106,6 +106,8 @@ extern "C" fn stream_finished_callback<T>(user_data: *mut ::libc::c_void)
         Some(ref mut f) => (*f)(),
         None => {},
     };
+
+    unsafe { mem::forget(stream_data); }
 }
 
 trait SampleType
