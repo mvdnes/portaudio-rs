@@ -10,6 +10,7 @@ pub type HostApiIndex = uint;
 /// Possible Host API types
 #[repr(u32)]
 #[deriving(FromPrimitive)]
+#[allow(missing_doc)]
 pub enum HostApiType
 {
     InDevelopment = ll::paInDevelopment,
