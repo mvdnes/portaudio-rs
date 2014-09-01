@@ -1,3 +1,5 @@
+//! Contains the Stream class and associated values
+
 use ll;
 use pa::{PaError, PaResult};
 use device::DeviceIndex;
@@ -7,15 +9,24 @@ use std::mem;
 use std::time::duration::Duration;
 use libc::c_void;
 
+/// Allowable return values for a StreamCallback
 #[repr(u32)]
 pub enum StreamCallbackResult
 {
+    /// Continue invoking the callback
     Continue = ll::paContinue,
+
+    /// Stop invoking the callback and finish once everything has played
     Complete = ll::paComplete,
+
+    /// Stop invoking the callback and finish as soon as possible
     Abort = ll::paAbort,
 }
 
+/// Callback to consume, process or generate audio
 pub type StreamCallback<'a, I, O> = |input: &[I], output: &mut [O], timeinfo: StreamTimeInfo, StreamCallbackFlags|:'a -> StreamCallbackResult;
+
+/// Callback to be fired when a StreamCallback is stopped
 pub type StreamFinishedCallback<'a> = ||:'a;
 
 struct StreamUserData<'a, I, O>
@@ -26,10 +37,16 @@ struct StreamUserData<'a, I, O>
     finished_callback: Option<StreamFinishedCallback<'a>>,
 }
 
+/// Time information for various stream related values
 pub struct StreamTimeInfo
 {
+    /// Timestamp for the ADC capture time of the first frame
     pub input_adc_time: Duration,
+
+    /// Timestamp that the callback was invoked
     pub current_time: Duration,
+
+    /// Timestamp for the DAC output time of the first frame
     pub output_dac_time: Duration,
 }
 
@@ -47,21 +64,41 @@ impl StreamTimeInfo
 }
 
 bitflags!(
+    #[doc="Flags indicating the status of the callback"]
     flags StreamCallbackFlags: u64 {
+        #[doc="Indicates that the callback has inserted one or more zeroes since not enough data was available"]
         static inputUnderflow = 0x01,
+
+        #[doc="Indicates that the callback has discarded some data"]
         static inputOverflow = 0x02,
+
+        #[doc="Indicates that extra data was inserted in the output since there was not engough available"]
         static outputUnderflow = 0x04,
+
+        #[doc="Indicates that certain data was discarded since there was no room"]
         static outputOverflow = 0x08,
+
+        #[doc="Some or all of the output data will be used to prime the stream, input data may be zero"]
         static primingOutput = 0x10
     }
 )
 
 bitflags!(
+    #[doc="Flags used to control the behavior of a stream"]
     flags StreamFlags: u64 {
+        #[doc="Disable clipping of out of range samples"]
         static ClipOff                               = 0x00000001,
+
+        #[doc="Disable dithering"]
         static DitherOff                             = 0x00000002,
+
+        #[doc="Request that a full duplex stream will not discard overflowed input samples. The frames_per_buffer must be set to unspecified (0)"]
         static NeverDropInput                        = 0x00000004,
+
+        #[doc="Call the stream callback to fill initial output buffers, rather than priming the buffers with silence"]
         static PrimeOutputBuffersUsingStreamCallback = 0x00000008,
+
+        #[doc="Range for platform specific flags. Not all of the upper 16 bits need to be set at the same time."]
         static PlatformSpecific                      = 0xFFFF0000
     }
 )
@@ -129,6 +166,7 @@ fn get_sample_format<T: SampleType>() -> u64
     SampleType::sample_format(None::<T>)
 }
 
+#[doc(hidden)]
 pub fn get_sample_size<T: SampleType>() -> Result<uint, PaError>
 {
     match unsafe { ll::Pa_GetSampleSize(get_sample_format::<T>()) }
@@ -138,6 +176,13 @@ pub fn get_sample_size<T: SampleType>() -> Result<uint, PaError>
     }
 }
 
+/// Argument to Stream::open() or Stream::open_default() to allow PortAudio itself determine the
+/// optimal number of frames per buffer. This number may differ each time the callback is called.
+pub static FRAMES_PER_BUFFER_UNSPECIFIED: u64 = 0;
+
+/// An object for an PortAudio stream
+///
+/// Streams can have an input type I and output type O.
 pub struct Stream<'a, I, O>
 {
     pa_stream: *mut ll::PaStream,
@@ -148,6 +193,16 @@ pub struct Stream<'a, I, O>
 
 impl<'a, T: SampleType + Send> Stream<'a, T, T>
 {
+    /// Constructs a stream using the default input and output devices
+    ///
+    /// ## Arguments
+    /// * num_input_channels: Desired number of input channels
+    /// * num_output_channels: Desired number of output channels
+    /// * sample_rate: Sample rate of the stream
+    /// * frames_per_buffer: Number of frames per buffer. Use FRAMES_PER_BUFFER_UNSPECIFIED to let
+    /// portaudio determine the optimal number.
+    /// * callback: Some(callback) which PortAudio will call to read/write the buffers, or None
+    /// when using the read and write methods
     pub fn open_default(num_input_channels: uint,
                         num_output_channels: uint,
                         sample_rate: f64,
@@ -196,6 +251,17 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
 
 impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
 {
+    /// Constructs a stream with the desired input and output specifications
+    ///
+    /// ## Arguments
+    /// * input: Specification for the input channel
+    /// * output: Specification for the output channel
+    /// * sample_rate: Sample rate of the stream
+    /// * frames_per_buffer: Number of frames per buffer. Use FRAMES_PER_BUFFER_UNSPECIFIED to let
+    /// portaudio determine the optimal number.
+    /// * flags: Additional flags for the behaviour of the stream
+    /// * callback: Some(callback) which PortAudio will call to read/write the buffers, or None
+    /// when using the read and write methods
     pub fn open(input: StreamParameters<I>,
                 output: StreamParameters<O>,
                 sample_rate: f64,
@@ -244,16 +310,19 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
+    /// Starts the stream
     pub fn start(&self) -> PaResult
     {
         to_pa_result(unsafe { ll::Pa_StartStream(self.pa_stream) })
     }
 
+    /// Stops the stream. It will block untill all audio has finished playing
     pub fn stop(&self) -> PaResult
     {
         to_pa_result(unsafe { ll::Pa_StopStream(self.pa_stream) })
     }
 
+    /// Stop stream immediately without waiting for the buffers to complete
     pub fn abort(&self) -> PaResult
     {
         to_pa_result(unsafe { ll::Pa_AbortStream(self.pa_stream) })
@@ -264,6 +333,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         to_pa_result(unsafe { ll::Pa_CloseStream(self.pa_stream) })
     }
 
+    /// Returns wether the stream is stopped
     pub fn is_stopped(&self) -> Result<bool, PaError>
     {
         match unsafe { ll::Pa_IsStreamStopped(self.pa_stream) }
@@ -273,6 +343,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
+    /// Returns wether the stream is active
     pub fn is_active(&self) -> Result<bool, PaError>
     {
         match unsafe { ll::Pa_IsStreamActive(self.pa_stream) }
@@ -282,6 +353,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
+    /// Get the number of frames that can be read from the stream without waiting
     pub fn num_read_available(&self) -> Result<uint, PaError>
     {
         match unsafe { ll::Pa_GetStreamReadAvailable(self.pa_stream) }
@@ -291,6 +363,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
+    /// Get the number of frames that can be written to the stream without waiting
     pub fn num_write_available(&self) -> Result<uint, PaError>
     {
         match unsafe { ll::Pa_GetStreamWriteAvailable(self.pa_stream) }
@@ -300,6 +373,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
+    /// Write the given buffer to the stream. This function blocks
     pub fn write(&self, buffer: &[O]) -> PaResult
     {
         if self.outputs == 0 { return Err(::pa::CanNotWriteToAnInputOnlyStream) }
@@ -310,6 +384,8 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
     }
 
+    /// Reads from the stream to the given buffer. This function blocks until the whole buffer has
+    /// been filled
     pub fn read(&self, buffer: &mut [I]) -> PaResult
     {
         if self.inputs == 0 { return Err(::pa::CanNotReadFromAnOutputOnlyStream) }
@@ -320,17 +396,23 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, pointer, frames) })
     }
 
+    /// Returns the cpu load the stream callback consumes. This will return 0.0 if the stream uses
+    /// blocking read/write, or if an error occured.
     pub fn cpu_load(&self) -> f64
     {
         unsafe { ll::Pa_GetStreamCpuLoad(self.pa_stream) }
     }
 
+    /// Get the current timestamp of the stream
     pub fn time(&self) -> Duration
     {
         let time = unsafe { ll::Pa_GetStreamTime(self.pa_stream) };
         pa_time_to_duration(time)
     }
 
+    /// Get the actual latencies and sample rate
+    ///
+    /// Returns None when the stream is invalid or an error occured
     pub fn info(&self) -> Option<StreamInfo>
     {
         unsafe
@@ -341,6 +423,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
+    /// Set a callback which is to be called when the StreamCallback finishes
     pub fn set_finished_callback(&mut self, finished_callback: StreamFinishedCallback<'a>) -> PaResult
     {
         self.user_data.finished_callback = Some(finished_callback);
@@ -348,6 +431,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         to_pa_result(unsafe { ll::Pa_SetStreamFinishedCallback(self.pa_stream, callback_pointer) })
     }
 
+    /// Remove any previously attached finish callback
     pub fn unset_finished_callback(&mut self) -> PaResult
     {
         self.user_data.finished_callback = None;
@@ -368,10 +452,16 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Drop for Stream<'a, I, O>
     }
 }
 
+/// Stream parameters to be used with Stream::open()
 pub struct StreamParameters<T>
 {
+    /// Index of the device to use
     pub device: DeviceIndex,
+
+    /// Requested number of channels
     pub channel_count: uint,
+
+    /// Desired latency of the stream
     pub suggested_latency: Duration,
 }
 
@@ -390,15 +480,22 @@ impl<T: SampleType> StreamParameters<T>
     }
 }
 
+/// Returns Ok when the StreamParameters are supported. This ignores the latency field.
 pub fn is_format_supported<I: SampleType, O: SampleType>(input: StreamParameters<I>, output: StreamParameters<O>, sample_rate: f64) -> PaResult
 {
     to_pa_result(unsafe { ll::Pa_IsFormatSupported(&input.to_ll(), &output.to_ll(), sample_rate) })
 }
 
+/// Information about the actual latency and sample rate values the stream uses
 pub struct StreamInfo
 {
+    /// Input latency
     pub input_latency: Duration,
+
+    /// Output latency
     pub output_latency: Duration,
+
+    /// Sample rate
     pub sample_rate: f64,
 }
 
