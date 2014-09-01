@@ -431,8 +431,8 @@ mod test
     {
         use std::mem;
 
-        let pa_size = super::get_sample_size::<T>();
-        let rs_size = Ok(mem::size_of::<T>());
+        let pa_size = super::get_sample_size::<T>().unwrap();
+        let rs_size = mem::size_of::<T>();
         assert_eq!(rs_size, pa_size);
     }
 
@@ -447,8 +447,8 @@ mod test
 
         unsafe
         {
-            assert!   (mem::transmute::<Option<extern "C" fn()>, *const c_void>(Some(external_function)) != ptr::null());
-            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(None)                    ,  ptr::null());
+            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(Some(external_function)), external_function as *const c_void);
+            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(None)                   , ptr::null());
         }
     }
 
