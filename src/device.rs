@@ -1,3 +1,5 @@
+//! Info about connected audio devices
+
 use ll;
 use util::{to_pa_result, pa_time_to_duration};
 use hostapi::HostApiIndex;
@@ -7,16 +9,34 @@ use std::c_str::CString;
 
 pub type DeviceIndex = uint;
 
+/// Information for a specific device
 pub struct DeviceInfo
 {
+    /// Human readable name
     pub name: String,
+
+    /// Index of the host API this device belongs to
     pub host_api: HostApiIndex,
+
+    /// Maximal number of input channels that can be used
     pub max_input_channels: uint,
+
+    /// Maximal number of ouput channels that can be used
     pub max_output_channels: uint,
+
+    /// Default input latency for interactive performance
     pub default_low_input_latency: Duration,
+
+    /// Default output latency for interactive performance
     pub default_low_output_latency: Duration,
+
+    /// Default input latency for robust non-interactive applications
     pub default_high_input_latency: Duration,
+
+    /// Default output latency for robust non-interactive applications
     pub default_high_output_latency: Duration,
+
+    /// Default sample rate
     pub default_sample_rate: f64,
 }
 
@@ -39,6 +59,7 @@ impl DeviceInfo
     }
 }
 
+/// Retrieve the number of available devices.
 pub fn get_count() -> Result<uint, PaError>
 {
     match unsafe { ll::Pa_GetDeviceCount() }
@@ -48,6 +69,9 @@ pub fn get_count() -> Result<uint, PaError>
     }
 }
 
+/// Retrieve the index of the default input device
+///
+/// Will return Err(NoDevice) when non are available.
 pub fn get_default_input_index() -> Result<DeviceIndex, PaError>
 {
     match unsafe { ll::Pa_GetDefaultInputDevice() }
@@ -57,6 +81,9 @@ pub fn get_default_input_index() -> Result<DeviceIndex, PaError>
     }
 }
 
+/// Retrieve the index of the default output device
+///
+/// Will return Err(NoDevice) when non are available.
 pub fn get_default_output_index() -> Result<DeviceIndex, PaError>
 {
     match unsafe { ll::Pa_GetDefaultOutputDevice() }
@@ -66,6 +93,9 @@ pub fn get_default_output_index() -> Result<DeviceIndex, PaError>
     }
 }
 
+/// Get info about a particular device
+///
+/// Returns None when the index is out of range.
 pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
 {
     unsafe
@@ -76,6 +106,19 @@ pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
     }
 }
 
+/// Converts a device index from a specific host API to a global device index
+///
+/// Returns Err(InvalidHostApi) when the host_api is out of range, and Err(InvalidDevice) when
+/// host_api_device_index is out of range.
+///
+/// ```
+/// // We retrieve the index of device 3 of api 1
+/// let device_index = match portaudio::device::get_from_host_api_device_index(1, 3)
+/// {
+///     Ok(n) => n,
+///     Err(e) => { println!("Error: {}", e); return },
+/// };
+/// ```
 pub fn get_from_host_api_device_index(host_api: HostApiIndex, host_api_device_index: uint) -> Result<DeviceIndex, PaError>
 {
     match unsafe { ll::Pa_HostApiDeviceIndexToDeviceIndex(host_api as i32, host_api_device_index as i32) }
