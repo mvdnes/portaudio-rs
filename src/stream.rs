@@ -33,6 +33,19 @@ pub struct StreamTimeInfo
     pub output_dac_time: Duration,
 }
 
+impl StreamTimeInfo
+{
+    fn from_ll(data: &ll::PaStreamCallbackTimeInfo) -> StreamTimeInfo
+    {
+        StreamTimeInfo
+        {
+            input_adc_time: pa_time_to_duration(data.inputBufferAdcTime),
+            current_time: pa_time_to_duration(data.currentTime),
+            output_dac_time: pa_time_to_duration(data.outputBufferDacTime),
+        }
+    }
+}
+
 bitflags!(
     flags StreamCallbackFlags: u64 {
         static inputUnderflow = 0x01,
@@ -76,16 +89,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
     };
 
     let flags = StreamCallbackFlags::from_bits_truncate(status_flags);
-
-    let timeinfo = match unsafe { time_info.to_option() }
-    {
-        Some(ref info) => StreamTimeInfo { input_adc_time: pa_time_to_duration(info.inputBufferAdcTime),
-                                           current_time: pa_time_to_duration(info.currentTime),
-                                           output_dac_time: pa_time_to_duration(info.outputBufferDacTime) },
-        None => StreamTimeInfo { input_adc_time: Duration::seconds(0),
-                                 current_time: Duration::seconds(0),
-                                 output_dac_time: Duration::seconds(0), },
-    };
+    let timeinfo = StreamTimeInfo::from_ll(unsafe { time_info.to_option() }.unwrap());
 
     let result = match stream_data.callback
     {
@@ -278,7 +282,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
-    pub fn read_available(&self) -> Result<uint, PaError>
+    pub fn num_read_available(&self) -> Result<uint, PaError>
     {
         match unsafe { ll::Pa_GetStreamReadAvailable(self.pa_stream) }
         {
@@ -287,7 +291,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
     }
 
-    pub fn write_available(&self) -> Result<uint, PaError>
+    pub fn num_write_available(&self) -> Result<uint, PaError>
     {
         match unsafe { ll::Pa_GetStreamWriteAvailable(self.pa_stream) }
         {
@@ -346,6 +350,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
 
     pub fn unset_finished_callback(&mut self) -> PaResult
     {
+        self.user_data.finished_callback = None;
         to_pa_result(unsafe { ll::Pa_SetStreamFinishedCallback(self.pa_stream, None) })
     }
 }
