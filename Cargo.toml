@@ -8,3 +8,8 @@ authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
 name = "test"
 test = false
 doc = false
+
+[[bin]]
+name = "demo"
+test = false
+doc = false
