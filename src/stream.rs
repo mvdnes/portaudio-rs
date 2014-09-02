@@ -389,16 +389,28 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
     }
 
-    /// Reads from the stream to the given buffer. This function blocks until the whole buffer has
-    /// been filled
-    pub fn read(&self, buffer: &mut [I]) -> PaResult
+    /// Reads the requested number of frames from the input devices. This function blocks until
+    /// the whole buffer has been filled.
+    pub fn read(&self, frames: uint) -> Result<Vec<I>, PaError>
     {
         if self.inputs == 0 { return Err(::pa::CanNotReadFromAnOutputOnlyStream) }
 
-        let pointer = buffer.as_mut_ptr() as *mut c_void;
-        let frames = (buffer.len() / self.inputs) as u64;
+        // We create a buffer with the needed capacity. Then we feed that to the library, which
+        // will fill the buffer accordingly. Afterwards, we set the length of the vector as all its
+        // elements are now initialized.
+        let vec_len = frames * self.inputs;
+        let mut buffer = Vec::with_capacity(vec_len);
 
-        to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, pointer, frames) })
+        let buffer_ptr = buffer.as_mut_ptr() as *mut c_void;
+        match to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, buffer_ptr, frames as u64) })
+        {
+            Ok(()) =>
+            {
+                unsafe { buffer.set_len(vec_len); }
+                Ok(buffer)
+            },
+            Err(e) => Err(e),
+        }
     }
 
     /// Returns the cpu load the stream callback consumes. This will return 0.0 if the stream uses
