@@ -20,3 +20,8 @@ pub fn pa_time_to_duration(seconds: f64) -> Duration
 {
     Duration::milliseconds((seconds * 1000.0) as i64)
 }
+
+pub fn duration_to_pa_time(duration: Duration) -> f64
+{
+    duration.num_milliseconds() as f64 / 1000.0
+}

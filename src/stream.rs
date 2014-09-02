@@ -3,7 +3,7 @@
 use ll;
 use pa::{PaError, PaResult};
 use device::DeviceIndex;
-use util::{to_pa_result, pa_time_to_duration};
+use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
 use std::raw::Slice;
 use std::mem;
 use std::time::duration::Duration;
@@ -126,7 +126,10 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
     };
 
     let flags = StreamCallbackFlags::from_bits_truncate(status_flags);
-    let timeinfo = StreamTimeInfo::from_ll(unsafe { time_info.to_option() }.unwrap());
+
+    // PortAudio will probably never set time_info to NULL
+    let time_info_ll = unsafe { time_info.to_option() }.unwrap();
+    let timeinfo = StreamTimeInfo::from_ll(time_info_ll);
 
     let result = match stream_data.callback
     {
@@ -215,41 +218,43 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
                         callback: Option<StreamCallback<'a, T, T>>)
                        -> Result<Stream<'a, T, T>, PaError>
     {
-        unsafe
+        let callback_pointer = match callback
         {
-            let callback_pointer = match callback
-            {
-                Some(_) => Some(stream_callback::<T, T>),
-                None => None,
-            };
-            let userdata = box StreamUserData
-            {
-                num_input: num_input_channels,
-                num_output: num_output_channels,
-                callback: callback,
-                finished_callback: None,
-            };
-            let mut pa_stream = ::std::ptr::mut_null();
+            Some(_) => Some(stream_callback::<T, T>),
+            None => None,
+        };
+        let userdata = box StreamUserData
+        {
+            num_input: num_input_channels,
+            num_output: num_output_channels,
+            callback: callback,
+            finished_callback: None,
+        };
+        let mut pa_stream = ::std::ptr::mut_null();
 
-            let ud_pointer: *mut c_void = mem::transmute(userdata);
-            let ud_pointer_2 = ud_pointer.clone();
-            let code = ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
-                                                num_input_channels as i32,
-                                                num_output_channels as i32,
-                                                get_sample_format::<T>(),
-                                                sample_rate,
-                                                frames_per_buffer,
-                                                callback_pointer,
-                                                ud_pointer);
-            match to_pa_result(code)
-            {
-                Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                      user_data: mem::transmute(ud_pointer_2),
-                                      inputs: num_input_channels,
-                                      outputs: num_output_channels,
-                             }),
-                Err(v) => Err(v),
-            }
+        let pointer_for_callback: *mut c_void = unsafe { mem::transmute(userdata) };
+        let pointer_for_struct = pointer_for_callback.clone();
+
+        let code = unsafe
+        {
+            ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
+                                     num_input_channels as i32,
+                                     num_output_channels as i32,
+                                     get_sample_format::<T>(),
+                                     sample_rate,
+                                     frames_per_buffer,
+                                     callback_pointer,
+                                     pointer_for_callback)
+        };
+
+        match to_pa_result(code)
+        {
+            Ok(()) => Ok(Stream { pa_stream: pa_stream,
+                                  user_data: unsafe { mem::transmute(pointer_for_struct) },
+                                  inputs: num_input_channels,
+                                  outputs: num_output_channels,
+                         }),
+            Err(v) => Err(v),
         }
     }
 }
@@ -275,43 +280,44 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
                 callback: Option<StreamCallback<'a, I, O>>)
                -> Result<Stream<'a, I, O>, PaError>
     {
-        unsafe
+        let callback_pointer = match callback
         {
-            let callback_pointer = match callback
-            {
-                Some(_) => Some(stream_callback::<I, O>),
-                None => None,
-            };
+            Some(_) => Some(stream_callback::<I, O>),
+            None => None,
+        };
 
-            let user_data = box StreamUserData
-            {
-                num_input: input.channel_count,
-                num_output: output.channel_count,
-                callback: callback,
-                finished_callback: None,
-            };
+        let user_data = box StreamUserData
+        {
+            num_input: input.channel_count,
+            num_output: output.channel_count,
+            callback: callback,
+            finished_callback: None,
+        };
 
-            let mut pa_stream = ::std::ptr::mut_null();
-            let ud_pointer: *mut c_void = mem::transmute(user_data);
-            let ud_pointer_2 = ud_pointer.clone();
+        let mut pa_stream = ::std::ptr::mut_null();
+        let pointer_for_callback: *mut c_void = unsafe { mem::transmute(user_data) };
+        let pointer_for_struct = pointer_for_callback.clone();
 
-            let result = ll::Pa_OpenStream(&mut pa_stream,
-                                                  &input.to_ll(),
-                                                  &output.to_ll(),
-                                                  sample_rate,
-                                                  frames_per_buffer,
-                                                  flags.bits,
-                                                  callback_pointer,
-                                                  ud_pointer);
-            match to_pa_result(result)
-            {
-                Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                      user_data: mem::transmute(ud_pointer_2),
-                                      inputs: input.channel_count,
-                                      outputs: output.channel_count,
-                          }),
-                Err(v) => Err(v),
-            }
+        let result = unsafe
+        {
+            ll::Pa_OpenStream(&mut pa_stream,
+                              &input.to_ll(),
+                              &output.to_ll(),
+                              sample_rate,
+                              frames_per_buffer,
+                              flags.bits,
+                              callback_pointer,
+                              pointer_for_callback)
+        };
+
+        match to_pa_result(result)
+        {
+            Ok(()) => Ok(Stream { pa_stream: pa_stream,
+                                  user_data: unsafe { mem::transmute(pointer_for_struct) },
+                                  inputs: input.channel_count,
+                                  outputs: output.channel_count,
+                      }),
+            Err(v) => Err(v),
         }
     }
 
@@ -379,9 +385,24 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     }
 
     /// Write the given buffer to the stream. This function blocks
+    ///
+    /// Possible Error codes:
+    ///
+    /// * `CanNotWriteToAnInputOnlyStream`: when num_output_channels = 0
+    /// * `BadBufferPtr`: when buffer.len() is not a multiple of num_output_channels
+    /// * Some other error given by PortAudio
     pub fn write(&self, buffer: &[O]) -> PaResult
     {
-        if self.outputs == 0 { return Err(::pa::CanNotWriteToAnInputOnlyStream) }
+        if self.outputs == 0
+        {
+            return Err(::pa::CanNotWriteToAnInputOnlyStream)
+        }
+
+        // Ensure the buffer is the correct size.
+        if buffer.len() % self.outputs != 0
+        {
+            return Err(::pa::BadBufferPtr)
+        }
 
         let pointer = buffer.as_ptr() as *const c_void;
         let frames = (buffer.len() / self.outputs) as u64;
@@ -391,6 +412,8 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
 
     /// Reads the requested number of frames from the input devices. This function blocks until
     /// the whole buffer has been filled.
+    ///
+    /// Will return `CanNotReadFromAnOutputOnlyStream` if num_input_channels = 0.
     pub fn read(&self, frames: uint) -> Result<Vec<I>, PaError>
     {
         if self.inputs == 0 { return Err(::pa::CanNotReadFromAnOutputOnlyStream) }
@@ -463,7 +486,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Drop for Stream<'a, I, O>
     {
         match self.close()
         {
-            Err(v) => error!("Error: {}", v),
+            Err(v) => error!("Stream drop error: {}", v),
             Ok(_) => {},
         };
     }
@@ -491,7 +514,7 @@ impl<T: SampleType> StreamParameters<T>
             device: self.device as i32,
             channelCount: self.channel_count as i32,
             sampleFormat: get_sample_format::<T>(),
-            suggestedLatency: self.suggested_latency.num_milliseconds() as f64 / 1000.0,
+            suggestedLatency: duration_to_pa_time(self.suggested_latency),
             hostApiSpecificStreamInfo: ::std::ptr::mut_null(),
         }
     }
