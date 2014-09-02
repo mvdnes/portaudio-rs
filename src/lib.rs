@@ -10,7 +10,13 @@
 //! ```
 //! fn demo() -> portaudio::pa::PaResult
 //! {
-//!     let stream = try!(portaudio::stream::Stream::open_default(0, 1, 44100.0, 0, None));
+//!     let stream = try!(portaudio::stream::Stream::open_default(
+//!                           0, // input channels
+//!                           1, // output channels
+//!                           44100.0, // sample rate
+//!                           portaudio::stream::FRAMES_PER_BUFFER_UNSPECIFIED,
+//!                           None // no callback
+//!                      ));
 //!
 //!     try!(stream.start());
 //!

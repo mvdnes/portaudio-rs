@@ -24,7 +24,7 @@ fn print_devs()
 
 fn demo() -> portaudio::pa::PaResult
 {
-    let stream = try!(portaudio::stream::Stream::open_default(1, 1, 44100.0, 0, None));
+    let stream = try!(portaudio::stream::Stream::open_default(1, 1, 44100.0, portaudio::stream::FRAMES_PER_BUFFER_UNSPECIFIED, None));
 
     try!(stream.start());
 

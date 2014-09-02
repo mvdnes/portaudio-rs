@@ -83,7 +83,7 @@ fn callback_demo()
         stream::Continue
     };
 
-    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, 0, Some(callback))
+    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(callback))
     {
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
@@ -101,7 +101,7 @@ fn callback_demo()
 
 fn write_demo()
 {
-    let stream = match stream::Stream::open_default(0, 2, 44100f64, 0, None)
+    let stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, None)
     {
         Err(v) => { println!("Err({})", v); return },
         Ok(stream) => stream,
@@ -158,7 +158,7 @@ fn mixed_demo()
     println!("support? {}", supported);
     if supported.is_err() { return }
 
-    let stream = match stream::Stream::open(input, output, 44100f64, 0, stream::StreamFlags::empty(), None)
+    let stream = match stream::Stream::open(input, output, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, stream::StreamFlags::empty(), None)
     {
         Ok(s) => s,
         Err(o) => { println!("stream: Err({})", o); return },
