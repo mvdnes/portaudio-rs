@@ -128,7 +128,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
     let flags = StreamCallbackFlags::from_bits_truncate(status_flags);
 
     // PortAudio will probably never set time_info to NULL
-    let time_info_ll = unsafe { time_info.to_option() }.unwrap();
+    let time_info_ll = unsafe { time_info.as_ref() }.unwrap();
     let timeinfo = StreamTimeInfo::from_ll(time_info_ll);
 
     let result = match stream_data.callback
@@ -458,7 +458,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         unsafe
         {
             ll::Pa_GetStreamInfo(self.pa_stream)
-                .to_option()
+                .as_ref()
                 .map(|s| StreamInfo::from_ll(s))
         }
     }

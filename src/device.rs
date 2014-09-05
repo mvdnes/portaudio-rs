@@ -101,7 +101,7 @@ pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
     unsafe
     {
         ll::Pa_GetDeviceInfo(index as i32)
-            .to_option()
+            .as_ref()
             .map(|s| DeviceInfo::from_ll(s))
     }
 }
