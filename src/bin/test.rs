@@ -117,7 +117,7 @@ fn get_buffer(len: uint) -> Vec<f32>
     let mut left = 0.0f32;
     let mut right = 0.0f32;
     let mut result = Vec::with_capacity(len);
-    for i in range(0, len / 2)
+    for _ in range(0, len / 2)
     {
         result.push(left);
         result.push(right);
@@ -164,7 +164,7 @@ fn mixed_demo()
         Err(o) => { println!("stream: Err({})", o); return },
     };
 
-    let buffer = get_buffer(2*44100).move_iter().map(|v| (v * 127.0) as i8).collect::<Vec<i8>>();
+    let buffer = get_buffer(2*44100).into_iter().map(|v| (v * 127.0) as i8).collect::<Vec<i8>>();
     println!("start: {}", stream.start());
     println!("write: {}", stream.write(buffer.as_slice()));
     println!("stop: {}", stream.stop());

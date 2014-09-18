@@ -230,7 +230,7 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
             callback: callback,
             finished_callback: None,
         };
-        let mut pa_stream = ::std::ptr::mut_null();
+        let mut pa_stream = ::std::ptr::null_mut();
 
         let pointer_for_callback: *mut c_void = unsafe { mem::transmute(userdata) };
         let pointer_for_struct = pointer_for_callback.clone();
@@ -294,7 +294,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
             finished_callback: None,
         };
 
-        let mut pa_stream = ::std::ptr::mut_null();
+        let mut pa_stream = ::std::ptr::null_mut();
         let pointer_for_callback: *mut c_void = unsafe { mem::transmute(user_data) };
         let pointer_for_struct = pointer_for_callback.clone();
 
@@ -515,7 +515,7 @@ impl<T: SampleType> StreamParameters<T>
             channelCount: self.channel_count as i32,
             sampleFormat: get_sample_format::<T>(),
             suggestedLatency: duration_to_pa_time(self.suggested_latency),
-            hostApiSpecificStreamInfo: ::std::ptr::mut_null(),
+            hostApiSpecificStreamInfo: ::std::ptr::null_mut(),
         }
     }
 }
