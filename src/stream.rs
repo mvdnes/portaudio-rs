@@ -158,7 +158,7 @@ extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
 ///
 /// *WARNING*: It is not advised to implement this trait for any other types as the size and flag
 /// may not be the correct one.
-trait SampleType
+pub trait SampleType
 {
     /// Should return the PortAudio flag which corresponds to the type
     fn sample_format(_: Option<Self>) -> u64;
