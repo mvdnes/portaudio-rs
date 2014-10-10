@@ -67,19 +67,19 @@ bitflags!(
     #[doc="Flags indicating the status of the callback"]
     flags StreamCallbackFlags: u64 {
         #[doc="Indicates that the callback has inserted one or more zeroes since not enough data was available"]
-        static inputUnderflow = 0x01,
+        static INPUT_UNDERFLOW = 0x01,
 
         #[doc="Indicates that the callback has discarded some data"]
-        static inputOverflow = 0x02,
+        static INPUT_OVERFLOW = 0x02,
 
         #[doc="Indicates that extra data was inserted in the output since there was not engough available"]
-        static outputUnderflow = 0x04,
+        static OUTPUT_UNDERFLOW = 0x04,
 
         #[doc="Indicates that certain data was discarded since there was no room"]
-        static outputOverflow = 0x08,
+        static OUTPUT_OVERFLOW = 0x08,
 
         #[doc="Some or all of the output data will be used to prime the stream, input data may be zero"]
-        static primingOutput = 0x10
+        static PRIMING_OUTPUT = 0x10
     }
 )
 
@@ -87,19 +87,19 @@ bitflags!(
     #[doc="Flags used to control the behavior of a stream"]
     flags StreamFlags: u64 {
         #[doc="Disable clipping of out of range samples"]
-        static ClipOff                               = 0x00000001,
+        static CLIP_OFF                                   = 0x00000001,
 
         #[doc="Disable dithering"]
-        static DitherOff                             = 0x00000002,
+        static DITHER_OFF                                 = 0x00000002,
 
         #[doc="Request that a full duplex stream will not discard overflowed input samples. The frames_per_buffer must be set to unspecified (0)"]
-        static NeverDropInput                        = 0x00000004,
+        static NEVER_DROP_INPUT                           = 0x00000004,
 
         #[doc="Call the stream callback to fill initial output buffers, rather than priming the buffers with silence"]
-        static PrimeOutputBuffersUsingStreamCallback = 0x00000008,
+        static PRIME_OUTPUT_BUFFERS_USING_STREAM_CALLBACK = 0x00000008,
 
         #[doc="Range for platform specific flags. Not all of the upper 16 bits need to be set at the same time."]
-        static PlatformSpecific                      = 0xFFFF0000
+        static PLATFORM_SPECIFIC                          = 0xFFFF0000
     }
 )
 
