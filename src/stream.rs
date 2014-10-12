@@ -67,19 +67,19 @@ bitflags!(
     #[doc="Flags indicating the status of the callback"]
     flags StreamCallbackFlags: u64 {
         #[doc="Indicates that the callback has inserted one or more zeroes since not enough data was available"]
-        static INPUT_UNDERFLOW = 0x01,
+        const INPUT_UNDERFLOW = 0x01,
 
         #[doc="Indicates that the callback has discarded some data"]
-        static INPUT_OVERFLOW = 0x02,
+        const INPUT_OVERFLOW = 0x02,
 
         #[doc="Indicates that extra data was inserted in the output since there was not engough available"]
-        static OUTPUT_UNDERFLOW = 0x04,
+        const OUTPUT_UNDERFLOW = 0x04,
 
         #[doc="Indicates that certain data was discarded since there was no room"]
-        static OUTPUT_OVERFLOW = 0x08,
+        const OUTPUT_OVERFLOW = 0x08,
 
         #[doc="Some or all of the output data will be used to prime the stream, input data may be zero"]
-        static PRIMING_OUTPUT = 0x10
+        const PRIMING_OUTPUT = 0x10
     }
 )
 
@@ -87,19 +87,19 @@ bitflags!(
     #[doc="Flags used to control the behavior of a stream"]
     flags StreamFlags: u64 {
         #[doc="Disable clipping of out of range samples"]
-        static CLIP_OFF                                   = 0x00000001,
+        const CLIP_OFF                                   = 0x00000001,
 
         #[doc="Disable dithering"]
-        static DITHER_OFF                                 = 0x00000002,
+        const DITHER_OFF                                 = 0x00000002,
 
         #[doc="Request that a full duplex stream will not discard overflowed input samples. The frames_per_buffer must be set to unspecified (0)"]
-        static NEVER_DROP_INPUT                           = 0x00000004,
+        const NEVER_DROP_INPUT                           = 0x00000004,
 
         #[doc="Call the stream callback to fill initial output buffers, rather than priming the buffers with silence"]
-        static PRIME_OUTPUT_BUFFERS_USING_STREAM_CALLBACK = 0x00000008,
+        const PRIME_OUTPUT_BUFFERS_USING_STREAM_CALLBACK = 0x00000008,
 
         #[doc="Range for platform specific flags. Not all of the upper 16 bits need to be set at the same time."]
-        static PLATFORM_SPECIFIC                          = 0xFFFF0000
+        const PLATFORM_SPECIFIC                          = 0xFFFF0000
     }
 )
 
