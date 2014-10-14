@@ -7,15 +7,16 @@ notifications:
 
 env:
   global:
-    - secure: nIJ31R6hTk3oIjyJos3My5CvC/NPKR1cAuMuP5+5uDLDIMopbBYCOG9SIyVgwYTACRhTDDCqWaWUKGhMrG+AUbmcEEwXTNfFquvFM4KAkXUKPrRaY7VMvNGLTWdPd7nO2L0OXfK2hWoUyCNLyL4/83sgAeWplx8o5wxca7mp+i4=
+  - secure: MXAUD2r9MRPY1KRySfmZ6gJ4gKcht6B/oE9+qtapXLeSOdNrHccPeWyCC4iNTeQ/tO2rWShvPfNbUpj+xECcC/tpGtQ6Sok3Vu2Xm3guCGhFAttsgg7UC2527R+KtIGe//ybBLxboVopR3LZ6Z706/C0RffEGkFY38MnqvL3To0=
 
 install:
-  - sudo apt-get install portaudio19-dev
+- sudo apt-get install portaudio19-dev
 
 script:
-  - cargo build
-  - cargo test
-  - cargo doc
+- cargo build
+- cargo test
+- cargo doc --no-deps
+- rustdoc --test README.md -L target
 
-after_script:
-  - cd target && curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
+after_success:
+- ".travis/publish_doc.sh"
