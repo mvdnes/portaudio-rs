@@ -42,7 +42,7 @@ fn demo() -> portaudio::pa::PaResult
 
     let mut timer = match std::io::timer::Timer::new()
     {
-        Err(e) => { fail!("{}", e); },
+        Err(e) => { panic!("{}", e); },
         Ok(t) => t,
     };
     let waiter = timer.oneshot(std::time::duration::Duration::seconds(SECONDS as i64));
