@@ -8,7 +8,7 @@
 //! # Example
 //!
 //! ```
-//! fn demo() -> portaudio::pa::PaResult
+//! fn demo() -> portaudio::PaResult
 //! {
 //!     let stream = try!(portaudio::stream::Stream::open_default(
 //!                           0, // input channels
@@ -36,13 +36,15 @@
 //!     Ok(())
 //! }
 //!
-//! portaudio::pa::initialize().unwrap();
+//! portaudio::initialize().unwrap();
 //! println!("{}", demo());
-//! portaudio::pa::terminate().unwrap();
+//! portaudio::terminate().unwrap();
 //! ```
 
 extern crate libc;
 #[phase(plugin, link)] extern crate log;
+
+pub use pa::{PaError, PaResult, initialize, terminate, version, version_text};
 
 pub mod stream;
 pub mod pa;
