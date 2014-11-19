@@ -134,7 +134,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
     let result = match stream_data.callback
     {
         Some(ref mut f) => (*f)(input_buffer, output_buffer, timeinfo, flags),
-        None => Abort,
+        None => StreamCallbackResult::Abort,
     };
 
     unsafe { mem::forget(stream_data); }
@@ -395,13 +395,13 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     {
         if self.outputs == 0
         {
-            return Err(::pa::CanNotWriteToAnInputOnlyStream)
+            return Err(PaError::CanNotWriteToAnInputOnlyStream)
         }
 
         // Ensure the buffer is the correct size.
         if buffer.len() % self.outputs != 0
         {
-            return Err(::pa::BadBufferPtr)
+            return Err(PaError::BadBufferPtr)
         }
 
         let pointer = buffer.as_ptr() as *const c_void;
@@ -416,7 +416,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     /// Will return `CanNotReadFromAnOutputOnlyStream` if num_input_channels = 0.
     pub fn read(&self, frames: uint) -> Result<Vec<I>, PaError>
     {
-        if self.inputs == 0 { return Err(::pa::CanNotReadFromAnOutputOnlyStream) }
+        if self.inputs == 0 { return Err(PaError::CanNotReadFromAnOutputOnlyStream) }
 
         // We create a buffer with the needed capacity. Then we feed that to the library, which
         // will fill the buffer accordingly. Afterwards, we set the length of the vector as all its

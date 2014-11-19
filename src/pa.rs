@@ -85,7 +85,7 @@ impl fmt::Show for PaError
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self
         {
-            UnknownError => write!(f, "Unknown Error"),
+            PaError::UnknownError => write!(f, "Unknown Error"),
             other =>
             {
                 let message = unsafe { CString::new(ll::Pa_GetErrorText(other as i32), false) };

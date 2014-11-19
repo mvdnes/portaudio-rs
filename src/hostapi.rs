@@ -70,7 +70,7 @@ impl HostApiInfo
     {
         HostApiInfo
         {
-            api_type: FromPrimitive::from_u32(input._type).unwrap_or(Unknown),
+            api_type: FromPrimitive::from_u32(input._type).unwrap_or(HostApiType::Unknown),
             name: format!("{}", unsafe { CString::new(input.name, false) }),
             device_count: input.deviceCount as int,
             default_input: match input.defaultInputDevice { n if n >= 0 => Some(n as int), _ => None },
@@ -100,7 +100,7 @@ impl HostErrorInfo
         {
             code: input.errorCode as int,
             text: format!("{}", unsafe { CString::new(input.errorText, false) }),
-            api_type: FromPrimitive::from_u32(input.hostApiType).unwrap_or(Unknown),
+            api_type: FromPrimitive::from_u32(input.hostApiType).unwrap_or(HostApiType::Unknown),
         }
     }
 }

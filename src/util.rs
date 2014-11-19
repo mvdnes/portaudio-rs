@@ -1,4 +1,4 @@
-use pa::{PaResult, PaError, UnknownError};
+use pa::{PaResult, PaError};
 use ll;
 use std::time::duration::Duration;
 
@@ -12,7 +12,7 @@ pub fn to_pa_result(code: i32) -> PaResult
     match error
     {
         Some(value) => Err(value),
-        None => Err(UnknownError),
+        None => Err(PaError::UnknownError),
     }
 }
 
