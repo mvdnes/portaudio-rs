@@ -1,6 +1,6 @@
 //! Info about connected audio devices
 
-use ll;
+use ll::ll;
 use util::{to_pa_result, pa_time_to_duration};
 use hostapi::HostApiIndex;
 use pa::PaError;

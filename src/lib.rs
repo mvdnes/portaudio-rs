@@ -43,6 +43,7 @@
 
 extern crate libc;
 #[phase(plugin, link)] extern crate log;
+extern crate "portaudio-sys" as ll;
 
 pub use pa::{PaError, PaResult, initialize, terminate, version, version_text};
 
@@ -51,5 +52,4 @@ pub mod pa;
 pub mod hostapi;
 pub mod device;
 
-mod ll;
 mod util;

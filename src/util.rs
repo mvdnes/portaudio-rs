@@ -1,5 +1,5 @@
 use pa::{PaResult, PaError};
-use ll;
+use ll::ll;
 use std::time::duration::Duration;
 
 pub fn to_pa_result(code: i32) -> PaResult
