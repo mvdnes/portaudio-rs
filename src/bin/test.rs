@@ -80,7 +80,7 @@ fn callback_demo()
         unsafe { lp = left_phase; }
         unsafe { rp = right_phase; }
 
-        stream::Continue
+        stream::StreamCallbackResult::Continue
     };
 
     let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(callback))
