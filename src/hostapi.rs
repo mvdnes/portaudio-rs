@@ -1,6 +1,6 @@
 //! Info module for available audio host API's
 
-use ll::ll;
+use ll;
 use pa::PaError;
 use std::c_str::CString;
 use util::to_pa_result;

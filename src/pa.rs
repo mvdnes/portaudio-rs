@@ -1,7 +1,7 @@
 //! General utilities for PortAudio
 
 use util::to_pa_result;
-use ll::ll;
+use ll;
 use std::fmt;
 use std::c_str::CString;
 

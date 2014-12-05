@@ -1,6 +1,6 @@
 //! Contains the Stream class and associated values
 
-use ll::ll;
+use ll;
 use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
