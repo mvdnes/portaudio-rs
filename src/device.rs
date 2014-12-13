@@ -7,6 +7,7 @@ use pa::PaError;
 use std::time::duration::Duration;
 use std::c_str::CString;
 
+/// Index of a Device
 pub type DeviceIndex = uint;
 
 /// Information for a specific device

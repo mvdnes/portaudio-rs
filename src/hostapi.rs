@@ -5,6 +5,7 @@ use pa::PaError;
 use std::c_str::CString;
 use util::to_pa_result;
 
+/// Index number of a Host API
 pub type HostApiIndex = uint;
 
 /// Possible Host API types
