@@ -41,7 +41,7 @@ pub fn terminate() -> PaResult
 ///
 /// The NoError value (0) is not present since the Result type can be used then.
 #[repr(i32)]
-#[deriving(FromPrimitive, PartialEq)]
+#[deriving(FromPrimitive, PartialEq, Copy)]
 #[allow(missing_docs)]
 pub enum PaError
 {

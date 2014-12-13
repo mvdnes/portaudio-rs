@@ -11,6 +11,7 @@ use libc::c_void;
 
 /// Allowable return values for a StreamCallback
 #[repr(u32)]
+#[deriving(Copy)]
 pub enum StreamCallbackResult
 {
     /// Continue invoking the callback
@@ -38,6 +39,7 @@ struct StreamUserData<'a, I, O>
 }
 
 /// Time information for various stream related values
+#[deriving(Copy)]
 pub struct StreamTimeInfo
 {
     /// Timestamp for the ADC capture time of the first frame
@@ -64,6 +66,7 @@ impl StreamTimeInfo
 }
 
 bitflags!(
+    #[deriving(Copy)]
     #[doc="Flags indicating the status of the callback"]
     flags StreamCallbackFlags: u64 {
         #[doc="Indicates that the callback has inserted one or more zeroes since not enough data was available"]
@@ -84,6 +87,7 @@ bitflags!(
 )
 
 bitflags!(
+    #[deriving(Copy)]
     #[doc="Flags used to control the behavior of a stream"]
     flags StreamFlags: u64 {
         #[doc="Disable clipping of out of range samples"]
@@ -493,6 +497,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Drop for Stream<'a, I, O>
 }
 
 /// Stream parameters to be used with Stream::open()
+#[deriving(Copy)]
 pub struct StreamParameters<T>
 {
     /// Index of the device to use
@@ -527,6 +532,7 @@ pub fn is_format_supported<I: SampleType, O: SampleType>(input: StreamParameters
 }
 
 /// Information about the actual latency and sample rate values the stream uses
+#[deriving(Copy)]
 pub struct StreamInfo
 {
     /// Input latency
