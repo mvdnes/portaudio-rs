@@ -66,7 +66,6 @@ impl StreamTimeInfo
 }
 
 bitflags!(
-    #[deriving(Copy)]
     #[doc="Flags indicating the status of the callback"]
     flags StreamCallbackFlags: u64 {
         #[doc="Indicates that the callback has inserted one or more zeroes since not enough data was available"]
@@ -87,7 +86,6 @@ bitflags!(
 )
 
 bitflags!(
-    #[deriving(Copy)]
     #[doc="Flags used to control the behavior of a stream"]
     flags StreamFlags: u64 {
         #[doc="Disable clipping of out of range samples"]
