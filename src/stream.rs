@@ -83,7 +83,7 @@ bitflags!(
         #[doc="Some or all of the output data will be used to prime the stream, input data may be zero"]
         const PRIMING_OUTPUT = 0x10
     }
-)
+);
 
 bitflags!(
     #[doc="Flags used to control the behavior of a stream"]
@@ -103,7 +103,7 @@ bitflags!(
         #[doc="Range for platform specific flags. Not all of the upper 16 bits need to be set at the same time."]
         const PLATFORM_SPECIFIC                          = 0xFFFF0000
     }
-)
+);
 
 extern "C" fn stream_callback<I, O>(input: *const c_void,
                                     output: *mut c_void,
