@@ -9,6 +9,9 @@ use std::mem;
 use std::time::duration::Duration;
 use libc::c_void;
 
+type StreamCallbackType = extern "C" fn(*const c_void, *mut c_void, ::libc::c_ulong, *const ll::PaStreamCallbackTimeInfo, ll::PaStreamCallbackFlags, *mut c_void) -> ::libc::c_int;
+type StreamFinishedCallbackType = extern "C" fn(*mut c_void);
+
 /// Allowable return values for a StreamCallback
 #[repr(u32)]
 #[deriving(Copy)]
@@ -222,7 +225,7 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
     {
         let callback_pointer = match callback
         {
-            Some(_) => Some(stream_callback::<T, T>),
+            Some(_) => Some(stream_callback::<T, T> as StreamCallbackType),
             None => None,
         };
         let userdata = box StreamUserData
@@ -284,7 +287,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     {
         let callback_pointer = match callback
         {
-            Some(_) => Some(stream_callback::<I, O>),
+            Some(_) => Some(stream_callback::<I, O> as StreamCallbackType),
             None => None,
         };
 
@@ -469,7 +472,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     pub fn set_finished_callback(&mut self, finished_callback: StreamFinishedCallback<'a>) -> PaResult
     {
         self.user_data.finished_callback = Some(finished_callback);
-        let callback_pointer = Some(stream_finished_callback::<I, O>);
+        let callback_pointer = Some(stream_finished_callback::<I, O> as StreamFinishedCallbackType);
         to_pa_result(unsafe { ll::Pa_SetStreamFinishedCallback(self.pa_stream, callback_pointer) })
     }
 
@@ -593,8 +596,8 @@ mod test
 
         unsafe
         {
-            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(Some(external_function)), external_function as *const c_void);
-            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(None)                   , ptr::null());
+            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(Some(external_function as extern "C" fn())), external_function as *const c_void);
+            assert_eq!(mem::transmute::<Option<extern "C" fn()>, *const c_void>(None), ptr::null());
         }
     }
 
