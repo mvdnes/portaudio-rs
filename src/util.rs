@@ -1,6 +1,7 @@
 use pa::{PaResult, PaError};
 use ll;
 use std::time::duration::Duration;
+use std::num::FromPrimitive;
 
 pub fn to_pa_result(code: i32) -> PaResult
 {

@@ -3,6 +3,7 @@
 use ll;
 use pa::PaError;
 use std::c_str::CString;
+use std::num::FromPrimitive;
 use util::to_pa_result;
 
 /// Index number of a Host API
