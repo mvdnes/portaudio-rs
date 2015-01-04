@@ -59,7 +59,7 @@ fn demo() -> portaudio::pa::PaResult
         Ok(()) => {},
     }
 
-    waiter.recv();
+    let _ = waiter.recv();
 
     Ok(())
 }
