@@ -2,7 +2,7 @@
 
 use ll;
 use pa::PaError;
-use std::c_str::CString;
+use std::ffi::c_str_to_bytes;
 use std::num::FromPrimitive;
 use util::to_pa_result;
 
@@ -73,7 +73,7 @@ impl HostApiInfo
         HostApiInfo
         {
             api_type: FromPrimitive::from_u32(input._type).unwrap_or(HostApiType::Unknown),
-            name: format!("{}", unsafe { CString::new(input.name, false) }),
+            name: String::from_utf8_lossy(unsafe { c_str_to_bytes(&input.name) }).into_owned(),
             device_count: input.deviceCount as int,
             default_input: match input.defaultInputDevice { n if n >= 0 => Some(n as int), _ => None },
             default_output: match input.defaultOutputDevice { n if n >= 0 => Some(n as int), _ => None },
@@ -101,7 +101,7 @@ impl HostErrorInfo
         HostErrorInfo
         {
             code: input.errorCode as int,
-            text: format!("{}", unsafe { CString::new(input.errorText, false) }),
+            text: String::from_utf8_lossy(unsafe { c_str_to_bytes(&input.errorText) }).into_owned(),
             api_type: FromPrimitive::from_u32(input.hostApiType).unwrap_or(HostApiType::Unknown),
         }
     }

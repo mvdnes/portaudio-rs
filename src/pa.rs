@@ -3,7 +3,7 @@
 use util::to_pa_result;
 use ll;
 use std::fmt;
-use std::c_str::CString;
+use std::ffi::c_str_to_bytes;
 
 /// PortAudio version
 pub fn version() -> int
@@ -15,8 +15,9 @@ pub fn version() -> int
 /// Human-readable PortAudio version
 pub fn version_text() -> String
 {
-    let version = unsafe { CString::new(ll::Pa_GetVersionText(), false) };
-    format!("{}", version)
+    let version_c = unsafe { ll::Pa_GetVersionText() };
+    let version_s = String::from_utf8_lossy(unsafe { c_str_to_bytes(&version_c) });
+    version_s.into_owned()
 }
 
 /// Initialize the PortAudio API
@@ -88,8 +89,9 @@ impl fmt::Show for PaError
             PaError::UnknownError => write!(f, "Unknown Error"),
             other =>
             {
-                let message = unsafe { CString::new(ll::Pa_GetErrorText(other as i32), false) };
-                write!(f, "{}", message)
+                let message_c = unsafe { ll::Pa_GetErrorText(other as i32) };
+                let message_s = String::from_utf8_lossy(unsafe { c_str_to_bytes(&message_c) });
+                f.write_str(&*message_s)
             }
         }
     }

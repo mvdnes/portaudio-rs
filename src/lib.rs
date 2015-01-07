@@ -1,6 +1,6 @@
 #![crate_type = "lib"]
 #![crate_name = "portaudio"]
-#![feature(phase, unsafe_destructor)]
+#![feature(unsafe_destructor)]
 #![warn(missing_docs)]
 
 //! PortAudio bindings for Rust
@@ -42,7 +42,7 @@
 //! ```
 
 extern crate libc;
-#[phase(plugin, link)] extern crate log;
+#[macro_use] extern crate log;
 extern crate "portaudio-sys" as ll;
 
 pub use pa::{PaError, PaResult, initialize, terminate, version, version_text};

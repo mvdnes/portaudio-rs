@@ -28,10 +28,10 @@ pub enum StreamCallbackResult
 }
 
 /// Callback to consume, process or generate audio
-pub type StreamCallback<'a, I, O> = |input: &[I], output: &mut [O], timeinfo: StreamTimeInfo, StreamCallbackFlags|:'a -> StreamCallbackResult;
+pub type StreamCallback<'a, I, O> = Box<FnMut(&[I], &mut [O], StreamTimeInfo, StreamCallbackFlags) -> StreamCallbackResult + 'a>;
 
 /// Callback to be fired when a StreamCallback is stopped
-pub type StreamFinishedCallback<'a> = ||:'a;
+pub type StreamFinishedCallback<'a> = Box<FnMut() + 'a>;
 
 struct StreamUserData<'a, I, O>
 {
