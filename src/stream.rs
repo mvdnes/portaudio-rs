@@ -191,7 +191,7 @@ pub fn get_sample_size<T: SampleType>() -> Result<uint, PaError>
 
 /// Argument to Stream::open() or Stream::open_default() to allow PortAudio itself determine the
 /// optimal number of frames per buffer. This number may differ each time the callback is called.
-pub static FRAMES_PER_BUFFER_UNSPECIFIED: u64 = 0;
+pub const FRAMES_PER_BUFFER_UNSPECIFIED: u64 = 0;
 
 /// An object for an PortAudio stream
 ///
