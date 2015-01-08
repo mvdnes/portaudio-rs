@@ -28,17 +28,17 @@ pub enum StreamCallbackResult
 }
 
 /// Callback to consume, process or generate audio
-pub type StreamCallback<'a, I, O> = Box<FnMut(&[I], &mut [O], StreamTimeInfo, StreamCallbackFlags) -> StreamCallbackResult + 'a>;
+pub type StreamCallback<'a, I, O> = FnMut(&[I], &mut [O], StreamTimeInfo, StreamCallbackFlags) -> StreamCallbackResult + 'a;
 
 /// Callback to be fired when a StreamCallback is stopped
-pub type StreamFinishedCallback<'a> = Box<FnMut() + 'a>;
+pub type StreamFinishedCallback<'a> = FnMut() + 'a;
 
 struct StreamUserData<'a, I, O>
 {
     num_input: uint,
     num_output: uint,
-    callback: Option<StreamCallback<'a, I, O>>,
-    finished_callback: Option<StreamFinishedCallback<'a>>,
+    callback: Option<&'a mut StreamCallback<'a, I, O>>,
+    finished_callback: Option<&'a mut StreamFinishedCallback<'a>>,
 }
 
 /// Time information for various stream related values
@@ -220,7 +220,7 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
                         num_output_channels: uint,
                         sample_rate: f64,
                         frames_per_buffer: u64,
-                        callback: Option<StreamCallback<'a, T, T>>)
+                        callback: Option<&'a mut StreamCallback<'a, T, T>>)
                        -> Result<Stream<'a, T, T>, PaError>
     {
         let callback_pointer = match callback
@@ -282,7 +282,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
                 sample_rate: f64,
                 frames_per_buffer: u64,
                 flags: StreamFlags,
-                callback: Option<StreamCallback<'a, I, O>>)
+                callback: Option<&'a mut StreamCallback<'a, I, O>>)
                -> Result<Stream<'a, I, O>, PaError>
     {
         let callback_pointer = match callback
@@ -469,7 +469,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     }
 
     /// Set a callback which is to be called when the StreamCallback finishes
-    pub fn set_finished_callback(&mut self, finished_callback: StreamFinishedCallback<'a>) -> PaResult
+    pub fn set_finished_callback(&mut self, finished_callback: &'a mut StreamFinishedCallback<'a>) -> PaResult
     {
         self.user_data.finished_callback = Some(finished_callback);
         let callback_pointer = Some(stream_finished_callback::<I, O> as StreamFinishedCallbackType);
