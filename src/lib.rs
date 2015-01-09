@@ -2,6 +2,7 @@
 #![crate_name = "portaudio"]
 #![feature(unsafe_destructor)]
 #![warn(missing_docs)]
+#![allow(unstable)]
 
 //! PortAudio bindings for Rust
 //!

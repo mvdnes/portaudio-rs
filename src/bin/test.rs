@@ -1,3 +1,5 @@
+#![allow(unstable)]
+
 extern crate portaudio;
 
 use portaudio::{pa, stream, hostapi, device};

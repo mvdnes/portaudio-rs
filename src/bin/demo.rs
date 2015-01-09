@@ -1,3 +1,5 @@
+#![allow(unstable)]
+
 extern crate portaudio;
 
 static SECONDS: uint = 1;
