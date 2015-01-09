@@ -23,7 +23,7 @@
 //!
 //!     let mut phase = 0.0f32;
 //!     let mut buffer = Vec::with_capacity(44100);
-//!     for _i in range(0u, 44100)
+//!     for _i in range(0, 44100)
 //!     {
 //!         // Small amplitude such that the test does not produce sound
 //!         buffer.push(phase * 0.001);
@@ -32,13 +32,13 @@
 //!         if phase > 1.0 { phase -= 2.0; }
 //!     }
 //!
-//!     try!(stream.write(buffer.as_slice()));
+//!     try!(stream.write(buffer.as_slice())
 //!
 //!     Ok(())
 //! }
 //!
 //! portaudio::initialize().unwrap();
-//! println!("{}", demo());
+//! println!("{:?}", demo());
 //! portaudio::terminate().unwrap();
 //! ```
 

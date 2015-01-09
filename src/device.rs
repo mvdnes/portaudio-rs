@@ -117,7 +117,7 @@ pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
 /// let device_index = match portaudio::device::get_from_host_api_device_index(1, 3)
 /// {
 ///     Ok(n) => n,
-///     Err(e) => { println!("Error: {}", e); return },
+///     Err(e) => { println!("Error: {:?}", e); return },
 /// };
 /// ```
 pub fn get_from_host_api_device_index(host_api: HostApiIndex, host_api_device_index: u32) -> Result<DeviceIndex, PaError>

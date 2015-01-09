@@ -580,7 +580,7 @@ mod test
     {
         use std::mem;
 
-        let pa_size = super::get_sample_size::<T>().unwrap();
+        let pa_size = super::get_sample_size::<T>().unwrap() as usize;
         let rs_size = mem::size_of::<T>();
         assert_eq!(rs_size, pa_size);
     }
