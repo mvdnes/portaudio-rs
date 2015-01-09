@@ -29,7 +29,7 @@ fn demo() -> portaudio::PaResult
 
     let mut phase = 0.0f32;
     let mut buffer = Vec::with_capacity(44100);
-    for _i in range(0, 44100)
+    for _i in (0..44100)
     {
         // Small amplitude such that the test does not produce sound
         buffer.push(phase * 0.001);
