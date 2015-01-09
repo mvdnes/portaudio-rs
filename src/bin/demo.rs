@@ -6,7 +6,7 @@ fn main()
 {
     portaudio::pa::initialize().unwrap();
     print_devs();
-    println!("{}", demo());
+    println!("{:?}", demo());
     portaudio::pa::terminate().unwrap();
 }
 
@@ -49,13 +49,13 @@ fn demo() -> portaudio::pa::PaResult
 
     match stream.write(buffer.as_slice())
     {
-        Err(e) => { println!("write 1: Err({})", e); },
+        Err(e) => { println!("write 1: Err({:?})", e); },
         Ok(()) => {},
     }
 
     match stream.write(input.as_slice())
     {
-        Err(e) => { println!("write 2: Err({})", e); },
+        Err(e) => { println!("write 2: Err({:?})", e); },
         Ok(()) => {},
     }
 

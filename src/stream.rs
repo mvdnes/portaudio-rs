@@ -491,7 +491,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Drop for Stream<'a, I, O>
     {
         match self.close()
         {
-            Err(v) => error!("Stream drop error: {}", v),
+            Err(v) => error!("Stream drop error: {:?}", v),
             Ok(_) => {},
         };
     }

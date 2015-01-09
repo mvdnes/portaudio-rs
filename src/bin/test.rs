@@ -5,12 +5,12 @@ use portaudio::{pa, stream, hostapi, device};
 fn main()
 {
     println!("version: {} \"{}\"", pa::version(), pa::version_text());
-    println!("init: {}", pa::initialize());
+    println!("init: {:?}", pa::initialize());
 
     print_info();
     doit();
 
-    println!("term: {}", pa::terminate());
+    println!("term: {:?}", pa::terminate());
 }
 
 fn print_info()
@@ -85,32 +85,32 @@ fn callback_demo()
 
     let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(&mut callback as &mut stream::StreamCallback<_, _>))
     {
-        Err(v) => { println!("Err({})", v); return },
+        Err(v) => { println!("Err({:?})", v); return },
         Ok(stream) => stream,
     };
     let mut finished_callback = |&mut :| println!("Finshed callback called");
-    println!("finished_callback: {}", stream.set_finished_callback(&mut finished_callback));
-    println!("start: {}", stream.start());
+    println!("finished_callback: {:?}", stream.set_finished_callback(&mut finished_callback));
+    println!("start: {:?}", stream.start());
     std::io::timer::sleep(std::time::duration::Duration::seconds(1));
-    println!("stop: {}", stream.stop());
+    println!("stop: {:?}", stream.stop());
 
-    println!("finished_callback: {}", stream.unset_finished_callback());
-    println!("start: {}", stream.start());
+    println!("finished_callback: {:?}", stream.unset_finished_callback());
+    println!("start: {:?}", stream.start());
     std::io::timer::sleep(std::time::duration::Duration::seconds(1));
-    println!("stop: {}", stream.stop());
+    println!("stop: {:?}", stream.stop());
 }
 
 fn write_demo()
 {
     let stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, None)
     {
-        Err(v) => { println!("Err({})", v); return },
+        Err(v) => { println!("Err({:?})", v); return },
         Ok(stream) => stream,
     };
 
-    println!("start: {}", stream.start());
-    println!("write: {}", stream.write(get_buffer(44100*3).as_slice()));
-    println!("stop: {}", stream.stop());
+    println!("start: {:?}", stream.start());
+    println!("write: {:?}", stream.write(get_buffer(44100*3).as_slice()));
+    println!("stop: {:?}", stream.stop());
 }
 
 fn get_buffer(len: uint) -> Vec<f32>
@@ -156,17 +156,17 @@ fn mixed_demo()
     let output: stream::StreamParameters<i8> = stream::StreamParameters { device: out_idx, channel_count: 2, suggested_latency: out_lat };
 
     let supported = stream::is_format_supported(input, output, 44100f64);
-    println!("support? {}", supported);
+    println!("support? {:?}", supported);
     if supported.is_err() { return }
 
     let stream = match stream::Stream::open(input, output, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, stream::StreamFlags::empty(), None)
     {
         Ok(s) => s,
-        Err(o) => { println!("stream: Err({})", o); return },
+        Err(o) => { println!("stream: Err({:?})", o); return },
     };
 
     let buffer = get_buffer(2*44100).into_iter().map(|v| (v * 127.0) as i8).collect::<Vec<i8>>();
-    println!("start: {}", stream.start());
-    println!("write: {}", stream.write(buffer.as_slice()));
-    println!("stop: {}", stream.stop());
+    println!("start: {:?}", stream.start());
+    println!("write: {:?}", stream.write(buffer.as_slice()));
+    println!("stop: {:?}", stream.stop());
 }
