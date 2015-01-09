@@ -8,7 +8,7 @@ use std::time::duration::Duration;
 use std::ffi::c_str_to_bytes;
 
 /// Index of a Device
-pub type DeviceIndex = uint;
+pub type DeviceIndex = u32;
 
 /// Information for a specific device
 pub struct DeviceInfo
@@ -20,10 +20,10 @@ pub struct DeviceInfo
     pub host_api: HostApiIndex,
 
     /// Maximal number of input channels that can be used
-    pub max_input_channels: uint,
+    pub max_input_channels: u32,
 
     /// Maximal number of ouput channels that can be used
-    pub max_output_channels: uint,
+    pub max_output_channels: u32,
 
     /// Default input latency for interactive performance
     pub default_low_input_latency: Duration,
@@ -49,8 +49,8 @@ impl DeviceInfo
         {
             name: String::from_utf8_lossy(unsafe { c_str_to_bytes(&input.name) }).into_owned(),
             host_api: input.hostApi as HostApiIndex,
-            max_input_channels: input.maxInputChannels as uint,
-            max_output_channels: input.maxOutputChannels as uint,
+            max_input_channels: input.maxInputChannels as u32,
+            max_output_channels: input.maxOutputChannels as u32,
             default_low_input_latency: pa_time_to_duration(input.defaultLowInputLatency),
             default_low_output_latency: pa_time_to_duration(input.defaultLowOutputLatency),
             default_high_input_latency: pa_time_to_duration(input.defaultHighInputLatency),
@@ -61,11 +61,11 @@ impl DeviceInfo
 }
 
 /// Retrieve the number of available devices.
-pub fn get_count() -> Result<uint, PaError>
+pub fn get_count() -> Result<u32, PaError>
 {
     match unsafe { ll::Pa_GetDeviceCount() }
     {
-        n if n >= 0 => Ok(n as uint),
+        n if n >= 0 => Ok(n as u32),
         m => to_pa_result(m).map(|_| 0),
     }
 }
@@ -77,7 +77,7 @@ pub fn get_default_input_index() -> Result<DeviceIndex, PaError>
 {
     match unsafe { ll::Pa_GetDefaultInputDevice() }
     {
-        n if n >= 0 => Ok(n as uint),
+        n if n >= 0 => Ok(n as u32),
         m => to_pa_result(m).map(|_| 0),
     }
 }
@@ -89,7 +89,7 @@ pub fn get_default_output_index() -> Result<DeviceIndex, PaError>
 {
     match unsafe { ll::Pa_GetDefaultOutputDevice() }
     {
-        n if n >= 0 => Ok(n as uint),
+        n if n >= 0 => Ok(n as u32),
         m => to_pa_result(m).map(|_| 0),
     }
 }
@@ -120,7 +120,7 @@ pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
 ///     Err(e) => { println!("Error: {}", e); return },
 /// };
 /// ```
-pub fn get_from_host_api_device_index(host_api: HostApiIndex, host_api_device_index: uint) -> Result<DeviceIndex, PaError>
+pub fn get_from_host_api_device_index(host_api: HostApiIndex, host_api_device_index: u32) -> Result<DeviceIndex, PaError>
 {
     match unsafe { ll::Pa_HostApiDeviceIndexToDeviceIndex(host_api as i32, host_api_device_index as i32) }
     {

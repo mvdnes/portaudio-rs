@@ -35,8 +35,8 @@ pub type StreamFinishedCallback<'a> = FnMut() + 'a;
 
 struct StreamUserData<'a, I, O>
 {
-    num_input: uint,
-    num_output: uint,
+    num_input: u32,
+    num_output: u32,
     callback: Option<&'a mut StreamCallback<'a, I, O>>,
     finished_callback: Option<&'a mut StreamFinishedCallback<'a>>,
 }
@@ -120,13 +120,13 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
     let input_buffer: &[I] = unsafe
     {
         mem::transmute(
-            Slice { data: input as *const I, len: frame_count as uint * stream_data.num_input }
+            Slice { data: input as *const I, len: frame_count as usize * stream_data.num_input as usize }
         )
     };
     let output_buffer: &mut [O] = unsafe
     {
         mem::transmute(
-            Slice { data: output as *const O, len: frame_count as uint * stream_data.num_output }
+            Slice { data: output as *const O, len: frame_count as usize * stream_data.num_output as usize }
         )
     };
 
@@ -180,11 +180,11 @@ fn get_sample_format<T: SampleType>() -> u64
 }
 
 #[doc(hidden)]
-pub fn get_sample_size<T: SampleType>() -> Result<uint, PaError>
+pub fn get_sample_size<T: SampleType>() -> Result<u32, PaError>
 {
     match unsafe { ll::Pa_GetSampleSize(get_sample_format::<T>()) }
     {
-        n if n >= 0 => Ok(n as uint),
+        n if n >= 0 => Ok(n as u32),
         m => to_pa_result(m).map(|_| 0),
     }
 }
@@ -199,8 +199,8 @@ pub const FRAMES_PER_BUFFER_UNSPECIFIED: u64 = 0;
 pub struct Stream<'a, I, O>
 {
     pa_stream: *mut ll::PaStream,
-    inputs: uint,
-    outputs: uint,
+    inputs: u32,
+    outputs: u32,
     user_data: Box<StreamUserData<'a, I, O>>,
 }
 
@@ -216,8 +216,8 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
     /// portaudio determine the optimal number.
     /// * callback: Some(callback) which PortAudio will call to read/write the buffers, or None
     /// when using the read and write methods
-    pub fn open_default(num_input_channels: uint,
-                        num_output_channels: uint,
+    pub fn open_default(num_input_channels: u32,
+                        num_output_channels: u32,
                         sample_rate: f64,
                         frames_per_buffer: u64,
                         callback: Option<&'a mut StreamCallback<'a, T, T>>)
@@ -370,21 +370,21 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     }
 
     /// Get the number of frames that can be read from the stream without waiting
-    pub fn num_read_available(&self) -> Result<uint, PaError>
+    pub fn num_read_available(&self) -> Result<u32, PaError>
     {
         match unsafe { ll::Pa_GetStreamReadAvailable(self.pa_stream) }
         {
-            n if n >= 0 => { Ok(n as uint) },
+            n if n >= 0 => { Ok(n as u32) },
             n => to_pa_result(n as i32).map(|_| 0),
         }
     }
 
     /// Get the number of frames that can be written to the stream without waiting
-    pub fn num_write_available(&self) -> Result<uint, PaError>
+    pub fn num_write_available(&self) -> Result<u32, PaError>
     {
         match unsafe { ll::Pa_GetStreamWriteAvailable(self.pa_stream) }
         {
-            n if n >= 0 => { Ok(n as uint) },
+            n if n >= 0 => { Ok(n as u32) },
             n => to_pa_result(n as i32).map(|_| 0),
         }
     }
@@ -404,13 +404,13 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
 
         // Ensure the buffer is the correct size.
-        if buffer.len() % self.outputs != 0
+        if buffer.len() % self.outputs as usize != 0
         {
             return Err(PaError::BadBufferPtr)
         }
 
         let pointer = buffer.as_ptr() as *const c_void;
-        let frames = (buffer.len() / self.outputs) as u64;
+        let frames = (buffer.len() / self.outputs as usize) as u64;
 
         to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
     }
@@ -419,7 +419,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
     /// the whole buffer has been filled.
     ///
     /// Will return `CanNotReadFromAnOutputOnlyStream` if num_input_channels = 0.
-    pub fn read(&self, frames: uint) -> Result<Vec<I>, PaError>
+    pub fn read(&self, frames: u32) -> Result<Vec<I>, PaError>
     {
         if self.inputs == 0 { return Err(PaError::CanNotReadFromAnOutputOnlyStream) }
 
@@ -427,14 +427,14 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         // will fill the buffer accordingly. Afterwards, we set the length of the vector as all its
         // elements are now initialized.
         let vec_len = frames * self.inputs;
-        let mut buffer = Vec::with_capacity(vec_len);
+        let mut buffer = Vec::with_capacity(vec_len as usize);
 
         let buffer_ptr = buffer.as_mut_ptr() as *mut c_void;
         match to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, buffer_ptr, frames as u64) })
         {
             Ok(()) =>
             {
-                unsafe { buffer.set_len(vec_len); }
+                unsafe { buffer.set_len(vec_len as usize); }
                 Ok(buffer)
             },
             Err(e) => Err(e),
@@ -505,7 +505,7 @@ pub struct StreamParameters<T>
     pub device: DeviceIndex,
 
     /// Requested number of channels
-    pub channel_count: uint,
+    pub channel_count: u32,
 
     /// Desired latency of the stream
     pub suggested_latency: Duration,

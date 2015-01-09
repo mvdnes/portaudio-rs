@@ -6,10 +6,10 @@ use std::fmt;
 use std::ffi::c_str_to_bytes;
 
 /// PortAudio version
-pub fn version() -> int
+pub fn version() -> i32
 {
     let version = unsafe { ll::Pa_GetVersion() };
-    version as int
+    version as i32
 }
 
 /// Human-readable PortAudio version

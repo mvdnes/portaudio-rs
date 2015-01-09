@@ -115,7 +115,7 @@ fn write_demo()
     println!("stop: {:?}", stream.stop());
 }
 
-fn get_buffer(len: uint) -> Vec<f32>
+fn get_buffer(len: usize) -> Vec<f32>
 {
     let mut left = 0.0f32;
     let mut right = 0.0f32;

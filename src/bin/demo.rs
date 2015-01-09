@@ -2,7 +2,7 @@
 
 extern crate portaudio;
 
-static SECONDS: uint = 1;
+static SECONDS: usize = 1;
 
 fn main()
 {
@@ -34,7 +34,7 @@ fn demo() -> portaudio::pa::PaResult
 
     let mut phase = 0.0f32;
     let mut buffer = Vec::with_capacity(44100 * SECONDS);
-    for _i in range(0u, 44100 * SECONDS)
+    for _i in range(0, 44100 * SECONDS)
     {
         buffer.push(phase);
 

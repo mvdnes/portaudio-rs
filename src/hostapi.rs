@@ -7,7 +7,7 @@ use std::num::FromPrimitive;
 use util::to_pa_result;
 
 /// Index number of a Host API
-pub type HostApiIndex = uint;
+pub type HostApiIndex = u32;
 
 /// Possible Host API types
 #[repr(u32)]
@@ -57,13 +57,13 @@ pub struct HostApiInfo
     pub name: String,
 
     /// Number of devices this API has
-    pub device_count: int,
+    pub device_count: u32,
 
     /// Default input device of the API. Is None if there is no input device available.
-    pub default_input: Option<int>,
+    pub default_input: Option<u32>,
 
     /// Default output device of the API. Is None if there is no output device available.
-    pub default_output: Option<int>,
+    pub default_output: Option<u32>,
 }
 
 impl HostApiInfo
@@ -74,9 +74,9 @@ impl HostApiInfo
         {
             api_type: FromPrimitive::from_u32(input._type).unwrap_or(HostApiType::Unknown),
             name: String::from_utf8_lossy(unsafe { c_str_to_bytes(&input.name) }).into_owned(),
-            device_count: input.deviceCount as int,
-            default_input: match input.defaultInputDevice { n if n >= 0 => Some(n as int), _ => None },
-            default_output: match input.defaultOutputDevice { n if n >= 0 => Some(n as int), _ => None },
+            device_count: input.deviceCount as u32,
+            default_input: match input.defaultInputDevice { n if n >= 0 => Some(n as u32), _ => None },
+            default_output: match input.defaultOutputDevice { n if n >= 0 => Some(n as u32), _ => None },
         }
     }
 }
@@ -85,7 +85,7 @@ impl HostApiInfo
 pub struct HostErrorInfo
 {
     /// The error code given
-    pub code: int,
+    pub code: i32,
 
     /// A human readable error message
     pub text: String,
@@ -100,7 +100,7 @@ impl HostErrorInfo
     {
         HostErrorInfo
         {
-            code: input.errorCode as int,
+            code: input.errorCode as i32,
             text: String::from_utf8_lossy(unsafe { c_str_to_bytes(&input.errorText) }).into_owned(),
             api_type: FromPrimitive::from_u32(input.hostApiType).unwrap_or(HostApiType::Unknown),
         }
@@ -122,7 +122,7 @@ pub fn get_last_error() -> Option<HostErrorInfo>
 }
 
 /// Get the number of host API's available
-pub fn get_count() -> Result<uint, PaError>
+pub fn get_count() -> Result<u32, PaError>
 {
     match unsafe { ll::Pa_GetHostApiCount() }
     {
