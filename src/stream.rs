@@ -228,13 +228,13 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
             Some(_) => Some(stream_callback::<T, T> as StreamCallbackType),
             None => None,
         };
-        let userdata = box StreamUserData
+        let userdata = Box::new(StreamUserData
         {
             num_input: num_input_channels,
             num_output: num_output_channels,
             callback: callback,
             finished_callback: None,
-        };
+        });
         let mut pa_stream = ::std::ptr::null_mut();
 
         let pointer_for_callback: *mut c_void = unsafe { mem::transmute(userdata) };
@@ -291,13 +291,13 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
             None => None,
         };
 
-        let user_data = box StreamUserData
+        let user_data = Box::new(StreamUserData
         {
             num_input: input.channel_count,
             num_output: output.channel_count,
             callback: callback,
             finished_callback: None,
-        };
+        });
 
         let mut pa_stream = ::std::ptr::null_mut();
         let pointer_for_callback: *mut c_void = unsafe { mem::transmute(user_data) };
