@@ -7,6 +7,9 @@ authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
 [dependencies.portaudio-sys]
 path = "portaudio-sys"
 
+[dependencies]
+bitflags = "*"
+
 [[bin]]
 name = "test"
 test = false
