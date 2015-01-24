@@ -9,13 +9,3 @@ path = "portaudio-sys"
 
 [dependencies]
 bitflags = "*"
-
-[[bin]]
-name = "test"
-test = false
-doc = false
-
-[[bin]]
-name = "demo"
-test = false
-doc = false
