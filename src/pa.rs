@@ -81,9 +81,9 @@ pub enum PaError
     UnknownError,
 }
 
-impl fmt::Show for PaError
+impl fmt::Display for PaError
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self
         {
             PaError::UnknownError => write!(f, "Unknown Error"),
@@ -94,6 +94,13 @@ impl fmt::Show for PaError
                 f.write_str(&*message_s)
             }
         }
+    }
+}
+
+impl fmt::Debug for PaError
+{
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        ::std::fmt::Display::fmt(self, fmt)
     }
 }
 
