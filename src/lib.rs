@@ -1,8 +1,8 @@
 #![crate_type = "lib"]
 #![crate_name = "portaudio"]
 #![feature(unsafe_destructor)]
+#![feature(std_misc, core, hash, libc)]
 #![warn(missing_docs)]
-#![allow(unstable)]
 
 //! PortAudio bindings for Rust
 //!

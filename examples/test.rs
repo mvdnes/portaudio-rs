@@ -1,4 +1,4 @@
-#![allow(unstable)]
+#![feature(io, std_misc, collections)]
 
 extern crate portaudio;
 
@@ -20,7 +20,7 @@ fn print_info()
     match hostapi::get_count()
     {
         Ok(api_count) => {
-            for i in range(0, api_count)
+            for i in (0 .. api_count)
             {
                 let name = match hostapi::get_info(i)
                 {
@@ -36,7 +36,7 @@ fn print_info()
     match device::get_count()
     {
         Ok(device_count) => {
-            for i in range(0, device_count)
+            for i in (0 .. device_count)
             {
                 let name = match device::get_info(i)
                 {
@@ -67,7 +67,7 @@ fn callback_demo()
         let mut left_phase = unsafe { lp };
         let mut right_phase = unsafe { rp };
 
-        for i in range(0, output.len() / 2)
+        for i in (0 .. output.len() / 2)
         {
             output[i*2] = left_phase;
             output[i*2+1] = right_phase;
@@ -120,7 +120,7 @@ fn get_buffer(len: usize) -> Vec<f32>
     let mut left = 0.0f32;
     let mut right = 0.0f32;
     let mut result = Vec::with_capacity(len);
-    for _ in range(0, len / 2)
+    for _ in (0 .. len / 2)
     {
         result.push(left);
         result.push(right);

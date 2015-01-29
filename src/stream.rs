@@ -4,7 +4,6 @@ use ll;
 use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
-use std::raw::Slice;
 use std::mem;
 use std::time::duration::Duration;
 use libc::c_void;
@@ -116,18 +115,16 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
                                     user_data: *mut c_void) -> ::libc::c_int
 {
     let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
+    let input_typed = input as *const I;
+    let output_typed = output as *mut O;
 
     let input_buffer: &[I] = unsafe
     {
-        mem::transmute(
-            Slice { data: input as *const I, len: frame_count as usize * stream_data.num_input as usize }
-        )
+        ::std::slice::from_raw_buf(&input_typed, frame_count as usize * stream_data.num_input as usize)
     };
     let output_buffer: &mut [O] = unsafe
     {
-        mem::transmute(
-            Slice { data: output as *const O, len: frame_count as usize * stream_data.num_output as usize }
-        )
+        ::std::slice::from_raw_mut_buf(&output_typed, frame_count as usize * stream_data.num_output as usize)
     };
 
     let flags = StreamCallbackFlags::from_bits_truncate(status_flags);

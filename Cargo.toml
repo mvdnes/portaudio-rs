@@ -9,3 +9,4 @@ path = "portaudio-sys"
 
 [dependencies]
 bitflags = "*"
+log = "*"

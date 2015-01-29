@@ -1,4 +1,4 @@
-#![allow(unstable)]
+#![feature(std_misc, io)]
 
 extern crate portaudio;
 
@@ -14,7 +14,7 @@ fn main()
 
 fn print_devs()
 {
-    for i in range(0, portaudio::device::get_count().unwrap())
+    for i in (0 .. portaudio::device::get_count().unwrap())
     {
         match portaudio::device::get_info(i)
         {
@@ -34,7 +34,7 @@ fn demo() -> portaudio::pa::PaResult
 
     let mut phase = 0.0f32;
     let mut buffer = Vec::with_capacity(44100 * SECONDS);
-    for _i in range(0, 44100 * SECONDS)
+    for _i in (0 .. 44100 * SECONDS)
     {
         buffer.push(phase);
 
@@ -49,13 +49,13 @@ fn demo() -> portaudio::pa::PaResult
     };
     let waiter = timer.oneshot(std::time::duration::Duration::seconds(SECONDS as i64));
 
-    match stream.write(buffer.as_slice())
+    match stream.write(&*buffer)
     {
         Err(e) => { println!("write 1: Err({:?})", e); },
         Ok(()) => {},
     }
 
-    match stream.write(input.as_slice())
+    match stream.write(&*input)
     {
         Err(e) => { println!("write 2: Err({:?})", e); },
         Ok(()) => {},
