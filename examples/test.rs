@@ -85,20 +85,20 @@ fn callback_demo()
         stream::StreamCallbackResult::Continue
     };
 
+    let mut finished_callback = |&mut :| println!("Finshed callback called");
     let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(&mut callback as &mut stream::StreamCallback<_, _>))
     {
         Err(v) => { println!("Err({:?})", v); return },
         Ok(stream) => stream,
     };
-    let mut finished_callback = |&mut :| println!("Finshed callback called");
     println!("finished_callback: {:?}", stream.set_finished_callback(&mut finished_callback));
     println!("start: {:?}", stream.start());
-    std::io::timer::sleep(std::time::duration::Duration::seconds(1));
+    std::old_io::timer::sleep(std::time::duration::Duration::seconds(1));
     println!("stop: {:?}", stream.stop());
 
     println!("finished_callback: {:?}", stream.unset_finished_callback());
     println!("start: {:?}", stream.start());
-    std::io::timer::sleep(std::time::duration::Duration::seconds(1));
+    std::old_io::timer::sleep(std::time::duration::Duration::seconds(1));
     println!("stop: {:?}", stream.stop());
 }
 

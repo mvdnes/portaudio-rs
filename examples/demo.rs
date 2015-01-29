@@ -42,7 +42,7 @@ fn demo() -> portaudio::pa::PaResult
         if phase > 1.0 { phase -= 2.0; }
     }
 
-    let mut timer = match std::io::timer::Timer::new()
+    let mut timer = match std::old_io::timer::Timer::new()
     {
         Err(e) => { panic!("{}", e); },
         Ok(t) => t,
