@@ -1,4 +1,4 @@
-#![feature(io, std_misc, collections)]
+#![feature(io, std_misc, core)]
 
 extern crate portaudio;
 
