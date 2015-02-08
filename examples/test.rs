@@ -59,7 +59,7 @@ fn doit()
 
 fn callback_demo()
 {
-    let mut callback = |&mut: _input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
+    let mut callback = |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
     {
         static mut lp: f32 = 0.0;
         static mut rp: f32 = 0.0;
@@ -85,7 +85,7 @@ fn callback_demo()
         stream::StreamCallbackResult::Continue
     };
 
-    let mut finished_callback = |&mut :| println!("Finshed callback called");
+    let mut finished_callback = || println!("Finshed callback called");
     let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(&mut callback as &mut stream::StreamCallback<_, _>))
     {
         Err(v) => { println!("Err({:?})", v); return },
