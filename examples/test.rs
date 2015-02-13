@@ -1,4 +1,4 @@
-#![feature(io, std_misc, core)]
+#![feature(io, std_misc)]
 
 extern crate portaudio;
 
@@ -111,7 +111,7 @@ fn write_demo()
     };
 
     println!("start: {:?}", stream.start());
-    println!("write: {:?}", stream.write(get_buffer(44100*3).as_slice()));
+    println!("write: {:?}", stream.write(&get_buffer(44100*3)[]));
     println!("stop: {:?}", stream.stop());
 }
 
@@ -169,6 +169,6 @@ fn mixed_demo()
 
     let buffer = get_buffer(2*44100).into_iter().map(|v| (v * 127.0) as i8).collect::<Vec<i8>>();
     println!("start: {:?}", stream.start());
-    println!("write: {:?}", stream.write(buffer.as_slice()));
+    println!("write: {:?}", stream.write(&buffer[]));
     println!("stop: {:?}", stream.stop());
 }
