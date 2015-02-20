@@ -6,7 +6,7 @@ use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
 use std::mem;
 use std::time::duration::Duration;
-use libc::c_void;
+use libc::{c_void, c_ulong};
 
 type StreamCallbackType = extern "C" fn(*const c_void, *mut c_void, ::libc::c_ulong, *const ll::PaStreamCallbackTimeInfo, ll::PaStreamCallbackFlags, *mut c_void) -> ::libc::c_int;
 type StreamFinishedCallbackType = extern "C" fn(*mut c_void);
@@ -125,7 +125,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
         ::std::slice::from_raw_parts_mut(output as *mut O, frame_count as usize * stream_data.num_output as usize)
     };
 
-    let flags = StreamCallbackFlags::from_bits_truncate(status_flags);
+    let flags = StreamCallbackFlags::from_bits_truncate(status_flags as u64);
 
     // PortAudio will probably never set time_info to NULL
     let time_info_ll = unsafe { time_info.as_ref() }.unwrap();
@@ -177,7 +177,7 @@ fn get_sample_format<T: SampleType>() -> u64
 #[doc(hidden)]
 pub fn get_sample_size<T: SampleType>() -> Result<u32, PaError>
 {
-    match unsafe { ll::Pa_GetSampleSize(get_sample_format::<T>()) }
+    match unsafe { ll::Pa_GetSampleSize(get_sample_format::<T>() as c_ulong) }
     {
         n if n >= 0 => Ok(n as u32),
         m => to_pa_result(m).map(|_| 0),
@@ -240,9 +240,9 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
             ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
                                      num_input_channels as i32,
                                      num_output_channels as i32,
-                                     get_sample_format::<T>(),
+                                     get_sample_format::<T>() as c_ulong,
                                      sample_rate,
-                                     frames_per_buffer,
+                                     frames_per_buffer as c_ulong,
                                      callback_pointer,
                                      pointer_for_callback)
         };
@@ -304,8 +304,8 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
                               &input.to_ll(),
                               &output.to_ll(),
                               sample_rate,
-                              frames_per_buffer,
-                              flags.bits,
+                              frames_per_buffer as c_ulong,
+                              flags.bits as c_ulong,
                               callback_pointer,
                               pointer_for_callback)
         };
@@ -405,7 +405,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         }
 
         let pointer = buffer.as_ptr() as *const c_void;
-        let frames = (buffer.len() / self.outputs as usize) as u64;
+        let frames = (buffer.len() / self.outputs as usize) as c_ulong;
 
         to_pa_result(unsafe { ll::Pa_WriteStream(self.pa_stream, pointer, frames) })
     }
@@ -425,7 +425,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
         let mut buffer = Vec::with_capacity(vec_len as usize);
 
         let buffer_ptr = buffer.as_mut_ptr() as *mut c_void;
-        match to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, buffer_ptr, frames as u64) })
+        match to_pa_result(unsafe { ll::Pa_ReadStream(self.pa_stream, buffer_ptr, frames as c_ulong) })
         {
             Ok(()) =>
             {
@@ -514,7 +514,7 @@ impl<T: SampleType> StreamParameters<T>
         {
             device: self.device as i32,
             channelCount: self.channel_count as i32,
-            sampleFormat: get_sample_format::<T>(),
+            sampleFormat: get_sample_format::<T>() as c_ulong,
             suggestedLatency: duration_to_pa_time(self.suggested_latency),
             hostApiSpecificStreamInfo: ::std::ptr::null_mut(),
         }
