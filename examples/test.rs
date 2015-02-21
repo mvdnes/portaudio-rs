@@ -154,8 +154,8 @@ fn mixed_demo()
         None => return,
         Some(d) => d.default_low_output_latency,
     };
-    let input: stream::StreamParameters<f32> = stream::StreamParameters { device: in_idx, channel_count: 2, suggested_latency: in_lat };
-    let output: stream::StreamParameters<i8> = stream::StreamParameters { device: out_idx, channel_count: 2, suggested_latency: out_lat };
+    let input = stream::StreamParameters { device: in_idx, channel_count: 2, suggested_latency: in_lat, data: 0f32 };
+    let output = stream::StreamParameters { device: out_idx, channel_count: 2, suggested_latency: out_lat, data: 0i8 };
 
     let supported = stream::is_format_supported(input, output, 44100f64);
     println!("support? {:?}", supported);

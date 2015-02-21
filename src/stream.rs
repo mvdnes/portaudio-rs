@@ -504,6 +504,9 @@ pub struct StreamParameters<T>
 
     /// Desired latency of the stream
     pub suggested_latency: Duration,
+
+    /// Sample data to be used in the stream
+    pub data: T,
 }
 
 impl<T: SampleType> StreamParameters<T>
