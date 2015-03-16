@@ -1,4 +1,4 @@
-#![feature(std_misc, old_io)]
+#![feature(std_misc)]
 
 extern crate portaudio;
 
@@ -42,12 +42,9 @@ fn demo() -> portaudio::pa::PaResult
         if phase > 1.0 { phase -= 2.0; }
     }
 
-    let mut timer = match std::old_io::timer::Timer::new()
-    {
-        Err(e) => { panic!("{}", e); },
-        Ok(t) => t,
-    };
-    let waiter = timer.oneshot(std::time::duration::Duration::seconds(SECONDS as i64));
+    let waiter = std::thread::scoped(|| {
+        std::old_io::timer::sleep(std::time::duration::Duration::seconds(SECONDS as i64));
+    });
 
     match stream.write(&*buffer)
     {
@@ -61,7 +58,7 @@ fn demo() -> portaudio::pa::PaResult
         Ok(()) => {},
     }
 
-    let _ = waiter.recv();
+    let _ = waiter.join();
 
     Ok(())
 }

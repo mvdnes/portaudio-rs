@@ -1,4 +1,4 @@
-#![feature(std_misc, old_io)]
+#![feature(std_misc)]
 
 extern crate portaudio;
 
