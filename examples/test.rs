@@ -1,4 +1,4 @@
-#![feature(std_misc)]
+#![feature(std_misc, thread_sleep)]
 
 extern crate portaudio;
 
@@ -93,12 +93,12 @@ fn callback_demo()
     };
     println!("finished_callback: {:?}", stream.set_finished_callback(&mut finished_callback));
     println!("start: {:?}", stream.start());
-    std::old_io::timer::sleep(std::time::duration::Duration::seconds(1));
+    std::thread::sleep(std::time::duration::Duration::seconds(1));
     println!("stop: {:?}", stream.stop());
 
     println!("finished_callback: {:?}", stream.unset_finished_callback());
     println!("start: {:?}", stream.start());
-    std::old_io::timer::sleep(std::time::duration::Duration::seconds(1));
+    std::thread::sleep(std::time::duration::Duration::seconds(1));
     println!("stop: {:?}", stream.stop());
 }
 

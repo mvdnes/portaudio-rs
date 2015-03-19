@@ -1,4 +1,4 @@
-#![feature(std_misc)]
+#![feature(std_misc, thread_sleep)]
 
 extern crate portaudio;
 
@@ -43,7 +43,7 @@ fn demo() -> portaudio::pa::PaResult
     }
 
     let waiter = std::thread::scoped(|| {
-        std::old_io::timer::sleep(std::time::duration::Duration::seconds(SECONDS as i64));
+        std::thread::sleep(std::time::duration::Duration::seconds(SECONDS as i64));
     });
 
     match stream.write(&*buffer)
