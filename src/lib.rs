@@ -45,7 +45,7 @@
 extern crate libc;
 #[macro_use] extern crate log;
 #[macro_use] extern crate bitflags;
-extern crate "portaudio-sys" as ll;
+extern crate portaudio_sys as ll;
 
 pub use pa::{PaError, PaResult, initialize, terminate, version, version_text};
 

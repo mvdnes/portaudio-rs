@@ -86,7 +86,7 @@ fn callback_demo()
     };
 
     let mut finished_callback = || println!("Finshed callback called");
-    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(&mut callback as &mut stream::StreamCallback<_, _>))
+    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(&mut callback))
     {
         Err(v) => { println!("Err({:?})", v); return },
         Ok(stream) => stream,

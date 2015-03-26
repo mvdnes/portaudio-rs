@@ -1,13 +1,13 @@
 [package]
 
-name = "portaudio-sys"
+name = "portaudio_sys"
 version = "0.0.0"
 authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
 links = "portaudio"
 build = "build.rs"
 
 [lib]
-name = "portaudio-sys"
+name = "portaudio_sys"
 path = "lib.rs"
 
 [build-dependencies]

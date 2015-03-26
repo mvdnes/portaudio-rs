@@ -4,8 +4,8 @@ name = "portaudio"
 version = "0.0.1"
 authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
 
-[dependencies.portaudio-sys]
-path = "portaudio-sys"
+[dependencies.portaudio_sys]
+path = "portaudio_sys"
 
 [dependencies]
 bitflags = "*"

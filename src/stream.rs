@@ -191,7 +191,7 @@ pub const FRAMES_PER_BUFFER_UNSPECIFIED: u64 = 0;
 /// An object for an PortAudio stream
 ///
 /// Streams can have an input type I and output type O.
-pub struct Stream<'a, I, O>
+pub struct Stream<'a, I: SampleType, O: SampleType>
 {
     pa_stream: *mut ll::PaStream,
     inputs: u32,
@@ -199,7 +199,7 @@ pub struct Stream<'a, I, O>
     user_data: Box<StreamUserData<'a, I, O>>,
 }
 
-impl<'a, T: SampleType + Send> Stream<'a, T, T>
+impl<'a, T: SampleType> Stream<'a, T, T>
 {
     /// Constructs a stream using the default input and output devices
     ///
@@ -259,7 +259,7 @@ impl<'a, T: SampleType + Send> Stream<'a, T, T>
     }
 }
 
-impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
+impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
 {
     /// Constructs a stream with the desired input and output specifications
     ///
@@ -480,7 +480,7 @@ impl<'a, I: SampleType + Send, O: SampleType + Send> Stream<'a, I, O>
 }
 
 #[unsafe_destructor]
-impl<'a, I: SampleType + Send, O: SampleType + Send> Drop for Stream<'a, I, O>
+impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
 {
     fn drop(&mut self)
     {
