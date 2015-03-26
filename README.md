@@ -38,7 +38,7 @@ fn demo() -> portaudio::PaResult
         if phase > 1.0 { phase -= 2.0; }
     }
 
-    try!(stream.write(buffer.as_slice()));
+    try!(stream.write(&buffer));
 
     Ok(())
 }
