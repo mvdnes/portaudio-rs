@@ -237,7 +237,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
 
         let code = unsafe
         {
-            ll::Pa_OpenDefaultStream(&mut pa_stream as *mut *mut ll::PaStream,
+            ll::Pa_OpenDefaultStream(&mut pa_stream,
                                      num_input_channels as i32,
                                      num_output_channels as i32,
                                      get_sample_format::<T>() as c_ulong,

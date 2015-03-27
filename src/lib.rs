@@ -3,6 +3,7 @@
 #![feature(unsafe_destructor)]
 #![feature(std_misc, core, libc)]
 #![warn(missing_docs)]
+#![allow(trivial_numeric_casts)]
 
 //! PortAudio bindings for Rust
 //!
