@@ -33,7 +33,7 @@
 //!         if phase > 1.0 { phase -= 2.0; }
 //!     }
 //!
-//!     try!(stream.write(&buffer[]));
+//!     try!(stream.write(&buffer));
 //!
 //!     Ok(())
 //! }
