@@ -115,9 +115,10 @@ pub fn get_last_error() -> Option<HostErrorInfo>
 {
     unsafe
     {
-        ll::Pa_GetLastHostErrorInfo()
-            .as_ref()
-            .map(|s| HostErrorInfo::from_ll(s))
+        match ll::Pa_GetLastHostErrorInfo() {
+            p if p.is_null() => None,
+            p => Some(HostErrorInfo::from_ll(&*p)),
+        }
     }
 }
 
@@ -148,8 +149,9 @@ pub fn get_info(index: HostApiIndex) -> Option<HostApiInfo>
 {
     unsafe
     {
-        ll::Pa_GetHostApiInfo(index as i32)
-            .as_ref()
-            .map(|s| HostApiInfo::from_ll(s))
+        match ll::Pa_GetHostApiInfo(index as i32) {
+            p if p.is_null() => None,
+            p => Some(HostApiInfo::from_ll(&*p)),
+        }
     }
 }

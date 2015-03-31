@@ -101,9 +101,10 @@ pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
 {
     unsafe
     {
-        ll::Pa_GetDeviceInfo(index as i32)
-            .as_ref()
-            .map(|s| DeviceInfo::from_ll(s))
+        match ll::Pa_GetDeviceInfo(index as i32) {
+            p if p.is_null() => None,
+            p => Some(DeviceInfo::from_ll(&*p)),
+        }
     }
 }
 
