@@ -13,7 +13,7 @@ type StreamFinishedCallbackType = extern "C" fn(*mut c_void);
 
 /// Allowable return values for a StreamCallback
 #[repr(u32)]
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub enum StreamCallbackResult
 {
     /// Continue invoking the callback
@@ -41,7 +41,7 @@ struct StreamUserData<'a, I, O>
 }
 
 /// Time information for various stream related values
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct StreamTimeInfo
 {
     /// Timestamp for the ADC capture time of the first frame
@@ -494,7 +494,7 @@ impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
 }
 
 /// Stream parameters to be used with Stream::open()
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct StreamParameters<T>
 {
     /// Index of the device to use
@@ -532,7 +532,7 @@ pub fn is_format_supported<I: SampleType, O: SampleType>(input: StreamParameters
 }
 
 /// Information about the actual latency and sample rate values the stream uses
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct StreamInfo
 {
     /// Input latency

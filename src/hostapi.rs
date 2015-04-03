@@ -11,7 +11,7 @@ pub type HostApiIndex = u32;
 
 /// Possible Host API types
 #[repr(u32)]
-#[derive(FromPrimitive, Copy)]
+#[derive(FromPrimitive, Copy, Clone)]
 #[allow(missing_docs)]
 pub enum HostApiType
 {
