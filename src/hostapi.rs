@@ -3,7 +3,6 @@
 use ll;
 use pa::PaError;
 use std::ffi::CStr;
-use std::num::FromPrimitive;
 use util::to_pa_result;
 
 /// Index number of a Host API
@@ -11,7 +10,7 @@ pub type HostApiIndex = u32;
 
 /// Possible Host API types
 #[repr(u32)]
-#[derive(FromPrimitive, Copy, Clone)]
+#[derive(Copy, Clone)]
 #[allow(missing_docs)]
 pub enum HostApiType
 {
@@ -45,6 +44,28 @@ impl HostApiType
             m => to_pa_result(m).map(|_| 0),
         }
     }
+
+    /// Get the enum value corresponding to the u32
+    pub fn from_u32(num: u32) -> HostApiType
+    {
+        match num {
+            ll::paInDevelopment => HostApiType::InDevelopment,
+            ll::paDirectSound => HostApiType::DirectSound,
+            ll::paMME => HostApiType::MME,
+            ll::paASIO => HostApiType::ASIO,
+            ll::paSoundManager => HostApiType::SoundManager,
+            ll::paCoreAudio => HostApiType::CoreAudio,
+            ll::paOSS => HostApiType::OSS,
+            ll::paALSA => HostApiType::ALSA,
+            ll::paAL => HostApiType::AL,
+            ll::paBeOS => HostApiType::BeOS,
+            ll::paWDMKS => HostApiType::WDMKS,
+            ll::paJACK => HostApiType::JACK,
+            ll::paWASAPI => HostApiType::WASAPI,
+            ll::paAudioScienceHPI => HostApiType::AudioScienceHPI,
+            _ => HostApiType::Unknown,
+        }
+    }
 }
 
 /// Information about a specific host API
@@ -72,7 +93,7 @@ impl HostApiInfo
     {
         HostApiInfo
         {
-            api_type: FromPrimitive::from_u32(input._type).unwrap_or(HostApiType::Unknown),
+            api_type: HostApiType::from_u32(input._type),
             name: String::from_utf8_lossy(unsafe { CStr::from_ptr(input.name).to_bytes() }).into_owned(),
             device_count: input.deviceCount as u32,
             default_input: match input.defaultInputDevice { n if n >= 0 => Some(n as u32), _ => None },
@@ -102,7 +123,7 @@ impl HostErrorInfo
         {
             code: input.errorCode as i32,
             text: String::from_utf8_lossy(unsafe { CStr::from_ptr(input.errorText).to_bytes() }).into_owned(),
-            api_type: FromPrimitive::from_u32(input.hostApiType).unwrap_or(HostApiType::Unknown),
+            api_type: HostApiType::from_u32(input.hostApiType),
         }
     }
 }

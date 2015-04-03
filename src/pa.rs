@@ -81,6 +81,44 @@ pub enum PaError
     UnknownError,
 }
 
+impl PaError {
+    /// Get the enum value corresponding to the given i32
+    pub fn from_i32(num: i32) -> PaError {
+        match num {
+            ll::paNotInitialized => PaError::NotInitialized,
+            ll::paUnanticipatedHostError => PaError::UnanticipatedHostError,
+            ll::paInvalidChannelCount => PaError::InvalidChannelCount,
+            ll::paInvalidSampleRate => PaError::InvalidSampleRate,
+            ll::paInvalidDevice => PaError::InvalidDevice,
+            ll::paInvalidFlag => PaError::InvalidFlag,
+            ll::paSampleFormatNotSupported => PaError::SampleFormatNotSupported,
+            ll::paBadIODeviceCombination => PaError::BadIODeviceCombination,
+            ll::paInsufficientMemory => PaError::InsufficientMemory,
+            ll::paBufferTooBig => PaError::BufferTooBig,
+            ll::paBufferTooSmall => PaError::BufferTooSmall,
+            ll::paNullCallback => PaError::NullCallback,
+            ll::paBadStreamPtr => PaError::BadStreamPtr,
+            ll::paTimedOut => PaError::TimedOut,
+            ll::paInternalError => PaError::InternalError,
+            ll::paDeviceUnavailable => PaError::DeviceUnavailable,
+            ll::paIncompatibleHostApiSpecificStreamInfo => PaError::IncompatibleHostApiSpecificStreamInfo,
+            ll::paStreamIsStopped => PaError::StreamIsStopped,
+            ll::paStreamIsNotStopped => PaError::StreamIsNotStopped,
+            ll::paInputOverflowed => PaError::InputOverflowed,
+            ll::paOutputUnderflowed => PaError::OutputUnderflowed,
+            ll::paHostApiNotFound => PaError::HostApiNotFound,
+            ll::paInvalidHostApi => PaError::InvalidHostApi,
+            ll::paCanNotReadFromACallbackStream => PaError::CanNotReadFromACallbackStream,
+            ll::paCanNotWriteToACallbackStream => PaError::CanNotWriteToACallbackStream,
+            ll::paCanNotReadFromAnOutputOnlyStream => PaError::CanNotReadFromAnOutputOnlyStream,
+            ll::paCanNotWriteToAnInputOnlyStream => PaError::CanNotWriteToAnInputOnlyStream,
+            ll::paIncompatibleStreamHostApi => PaError::IncompatibleStreamHostApi,
+            ll::paBadBufferPtr => PaError::BadBufferPtr,
+            _ => PaError::UnknownError,
+        }
+    }
+}
+
 impl fmt::Display for PaError
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {

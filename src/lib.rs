@@ -1,6 +1,5 @@
 #![crate_type = "lib"]
 #![crate_name = "portaudio"]
-#![feature(core)]
 #![warn(missing_docs)]
 
 //! PortAudio bindings for Rust
