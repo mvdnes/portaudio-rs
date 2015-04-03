@@ -5,7 +5,7 @@ use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
 use std::mem;
-use std::time::duration::Duration;
+use util::Duration;
 use libc::{c_void, c_ulong};
 
 type StreamCallbackType = extern "C" fn(*const c_void, *mut c_void, ::libc::c_ulong, *const ll::PaStreamCallbackTimeInfo, ll::PaStreamCallbackFlags, *mut c_void) -> ::libc::c_int;
