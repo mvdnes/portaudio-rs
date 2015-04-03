@@ -1,7 +1,6 @@
 #![crate_type = "lib"]
 #![crate_name = "portaudio"]
-#![feature(unsafe_destructor)]
-#![feature(std_misc, core, libc)]
+#![feature(std_misc, core)]
 #![warn(missing_docs)]
 #![allow(trivial_numeric_casts)]
 

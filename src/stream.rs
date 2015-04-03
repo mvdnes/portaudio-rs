@@ -480,7 +480,6 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
     }
 }
 
-#[unsafe_destructor]
 impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
 {
     fn drop(&mut self)
