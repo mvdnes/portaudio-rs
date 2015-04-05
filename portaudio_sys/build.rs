@@ -4,7 +4,7 @@ fn main() {
     match pkg_config::find_library("portaudio-2.0")
     {
         Ok(..) => {},
-        Err(e) => println!("Cloud not find pkg-config ({})", e),
+        Err(e) => panic!("{}", e),
     }
 }
 
