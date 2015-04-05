@@ -9,8 +9,12 @@ env:
   global:
   - secure: MXAUD2r9MRPY1KRySfmZ6gJ4gKcht6B/oE9+qtapXLeSOdNrHccPeWyCC4iNTeQ/tO2rWShvPfNbUpj+xECcC/tpGtQ6Sok3Vu2Xm3guCGhFAttsgg7UC2527R+KtIGe//ybBLxboVopR3LZ6Z706/C0RffEGkFY38MnqvL3To0=
 
-install:
-- sudo apt-get install portaudio19-dev
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - libportaudio2
 
 script:
 - cargo build
