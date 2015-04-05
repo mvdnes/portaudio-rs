@@ -5,6 +5,7 @@ use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
 use std::mem;
+use std::marker::PhantomFn;
 use util::Duration;
 use libc::{c_void, c_ulong};
 
@@ -158,26 +159,21 @@ extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
 ///
 /// *WARNING*: It is not advised to implement this trait for any other types as the size and flag
 /// may not be the correct one.
-pub trait SampleType
+pub trait SampleType : PhantomFn<Self>
 {
     /// Should return the PortAudio flag which corresponds to the type
-    fn sample_format(_: Option<Self>) -> u64;
+    fn sample_format() -> u64;
 }
-impl SampleType for f32 { fn sample_format(_: Option<f32>) -> u64 { 0x00000001 } }
-impl SampleType for i32 { fn sample_format(_: Option<i32>) -> u64 { 0x00000002 } }
-impl SampleType for i16 { fn sample_format(_: Option<i16>) -> u64 { 0x00000008 } }
-impl SampleType for i8 { fn sample_format(_: Option<i8>) -> u64 { 0x00000010 } }
-impl SampleType for u8 { fn sample_format(_: Option<u8>) -> u64 { 0x00000020 } }
-
-fn get_sample_format<T: SampleType>() -> u64
-{
-    SampleType::sample_format(None::<T>)
-}
+impl SampleType for f32 { fn sample_format() -> u64 { 0x00000001 } }
+impl SampleType for i32 { fn sample_format() -> u64 { 0x00000002 } }
+impl SampleType for i16 { fn sample_format() -> u64 { 0x00000008 } }
+impl SampleType for i8 { fn sample_format() -> u64 { 0x00000010 } }
+impl SampleType for u8 { fn sample_format() -> u64 { 0x00000020 } }
 
 #[doc(hidden)]
 pub fn get_sample_size<T: SampleType>() -> Result<u32, PaError>
 {
-    match unsafe { ll::Pa_GetSampleSize(get_sample_format::<T>() as c_ulong) }
+    match unsafe { ll::Pa_GetSampleSize(<T as SampleType>::sample_format() as c_ulong) }
     {
         n if n >= 0 => Ok(n as u32),
         m => to_pa_result(m).map(|_| 0),
@@ -240,7 +236,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
             ll::Pa_OpenDefaultStream(&mut pa_stream,
                                      num_input_channels as i32,
                                      num_output_channels as i32,
-                                     get_sample_format::<T>() as c_ulong,
+                                     <T as SampleType>::sample_format() as c_ulong,
                                      sample_rate,
                                      frames_per_buffer as c_ulong,
                                      callback_pointer,
@@ -517,7 +513,7 @@ impl<T: SampleType> StreamParameters<T>
         {
             device: self.device as i32,
             channelCount: self.channel_count as i32,
-            sampleFormat: get_sample_format::<T>() as c_ulong,
+            sampleFormat: <T as SampleType>::sample_format() as c_ulong,
             suggestedLatency: duration_to_pa_time(self.suggested_latency),
             hostApiSpecificStreamInfo: ::std::ptr::null_mut(),
         }
