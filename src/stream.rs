@@ -8,6 +8,7 @@ use std::mem;
 use std::marker::PhantomFn;
 use util::Duration;
 use libc::{c_void, c_ulong};
+use std::io::prelude::*;
 
 type StreamCallbackType = extern "C" fn(*const c_void, *mut c_void, ::libc::c_ulong, *const ll::PaStreamCallbackTimeInfo, ll::PaStreamCallbackFlags, *mut c_void) -> ::libc::c_int;
 type StreamFinishedCallbackType = extern "C" fn(*mut c_void);
@@ -482,7 +483,7 @@ impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
     {
         match self.close()
         {
-            Err(v) => error!("Stream drop error: {:?}", v),
+            Err(v) => { let _ = write!(&mut ::std::io::stderr(), "Stream drop error: {:?}", v); },
             Ok(_) => {},
         };
     }
