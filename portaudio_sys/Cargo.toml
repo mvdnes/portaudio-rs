@@ -11,7 +11,7 @@ name = "portaudio_sys"
 path = "lib.rs"
 
 [build-dependencies]
-pkg-config = "*"
+pkg-config = "^0.3.3"
 
 [dependencies]
 libc = "^0.1.5"

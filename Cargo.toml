@@ -8,5 +8,5 @@ authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
 path = "portaudio_sys"
 
 [dependencies]
-bitflags = "*"
-libc = "*"
+bitflags = "^0.1.1"
+libc = "^0.1.5"
