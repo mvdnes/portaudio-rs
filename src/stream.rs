@@ -483,7 +483,7 @@ impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
     {
         match self.close()
         {
-            Err(v) => { let _ = write!(&mut ::std::io::stderr(), "Stream drop error: {:?}", v); },
+            Err(v) => { let _ = write!(&mut ::std::io::stderr(), "Stream drop error: {:?}\n", v); },
             Ok(_) => {},
         };
     }
