@@ -4,10 +4,10 @@ static SECONDS: usize = 1;
 
 fn main()
 {
-    portaudio::pa::initialize().unwrap();
+    portaudio::initialize().unwrap();
     print_devs();
     println!("{:?}", demo());
-    portaudio::pa::terminate().unwrap();
+    portaudio::terminate().unwrap();
 }
 
 fn print_devs()
@@ -22,7 +22,7 @@ fn print_devs()
     }
 }
 
-fn demo() -> portaudio::pa::PaResult
+fn demo() -> portaudio::PaResult
 {
     let stream = try!(portaudio::stream::Stream::open_default(1, 1, 44100.0, portaudio::stream::FRAMES_PER_BUFFER_UNSPECIFIED, None));
 

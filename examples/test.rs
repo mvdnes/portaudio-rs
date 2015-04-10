@@ -1,16 +1,16 @@
 extern crate portaudio;
 
-use portaudio::{pa, stream, hostapi, device};
+use portaudio::{stream, hostapi, device};
 
 fn main()
 {
-    println!("version: {} \"{}\"", pa::version(), pa::version_text());
-    println!("init: {:?}", pa::initialize());
+    println!("version: {} \"{}\"", portaudio::version(), portaudio::version_text());
+    println!("init: {:?}", portaudio::initialize());
 
     print_info();
     doit();
 
-    println!("term: {:?}", pa::terminate());
+    println!("term: {:?}", portaudio::terminate());
 }
 
 fn print_info()

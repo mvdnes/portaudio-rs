@@ -47,7 +47,7 @@ extern crate portaudio_sys as ll;
 pub use pa::{PaError, PaResult, initialize, terminate, version, version_text};
 
 pub mod stream;
-pub mod pa;
+mod pa;
 pub mod hostapi;
 pub mod device;
 
