@@ -11,10 +11,6 @@ notifications:
         on_success: never
         on_failure: always
 
-env:
-    global:
-        - secure: MXAUD2r9MRPY1KRySfmZ6gJ4gKcht6B/oE9+qtapXLeSOdNrHccPeWyCC4iNTeQ/tO2rWShvPfNbUpj+xECcC/tpGtQ6Sok3Vu2Xm3guCGhFAttsgg7UC2527R+KtIGe//ybBLxboVopR3LZ6Z706/C0RffEGkFY38MnqvL3To0=
-
 addons:
     apt:
         packages:
@@ -23,8 +19,8 @@ addons:
 script:
     - cargo build
     - cargo test
-    - cargo doc --no-deps
+    - cargo doc
     - rustdoc --test README.md -L target/debug -L target/debug/deps
 
 after_success:
-    - .travis/publish_doc.sh
+    - .travis/travis-doc-upload.sh
