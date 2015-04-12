@@ -171,8 +171,8 @@ impl SampleType for i16 { fn sample_format() -> u64 { 0x00000008 } }
 impl SampleType for i8 { fn sample_format() -> u64 { 0x00000010 } }
 impl SampleType for u8 { fn sample_format() -> u64 { 0x00000020 } }
 
-#[doc(hidden)]
-pub fn get_sample_size<T: SampleType>() -> Result<u32, PaError>
+#[cfg(test)]
+fn get_sample_size<T: SampleType>() -> Result<u32, PaError>
 {
     match unsafe { ll::Pa_GetSampleSize(<T as SampleType>::sample_format() as c_ulong) }
     {
