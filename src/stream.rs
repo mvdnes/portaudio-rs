@@ -116,6 +116,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
                                     status_flags: ll::PaStreamCallbackFlags,
                                     user_data: *mut c_void) -> ::libc::c_int
 {
+    // TODO: use Box::from_raw once it is stable
     let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
 
     let input_buffer: &[I] = unsafe
@@ -146,6 +147,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
 
 extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
 {
+    // TODO: use Box::from_raw once it is stable
     let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
     match stream_data.finished_callback
     {
@@ -220,7 +222,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
             Some(_) => Some(stream_callback::<T, T> as StreamCallbackType),
             None => None,
         };
-        let userdata = Box::new(StreamUserData
+        let mut userdata = Box::new(StreamUserData
         {
             num_input: num_input_channels,
             num_output: num_output_channels,
@@ -229,7 +231,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
         });
         let mut pa_stream = ::std::ptr::null_mut();
 
-        let pointer_for_callback: *mut c_void = unsafe { mem::transmute(userdata) };
+        let pointer_for_callback: *mut c_void = &mut *userdata as *mut StreamUserData<T, T> as *mut c_void;
         let pointer_for_struct = pointer_for_callback.clone();
 
         let code = unsafe
@@ -283,7 +285,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
             None => None,
         };
 
-        let user_data = Box::new(StreamUserData
+        let mut user_data = Box::new(StreamUserData
         {
             num_input: input.channel_count,
             num_output: output.channel_count,
@@ -292,7 +294,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
         });
 
         let mut pa_stream = ::std::ptr::null_mut();
-        let pointer_for_callback: *mut c_void = unsafe { mem::transmute(user_data) };
+        let pointer_for_callback: *mut c_void = &mut *user_data as *mut StreamUserData<I, O> as *mut c_void;
         let pointer_for_struct = pointer_for_callback.clone();
 
         let result = unsafe
