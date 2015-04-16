@@ -40,8 +40,11 @@ fn demo() -> portaudio::PaResult
         if phase > 1.0 { phase -= 2.0; }
     }
 
-    let waiter = std::thread::scoped(|| {
+    let barrier = std::sync::Arc::new(std::sync::Barrier::new(2));
+    let sleep = barrier.clone();
+    std::thread::spawn(move|| {
         std::thread::sleep_ms((SECONDS * 1000) as u32);
+        barrier.wait();
     });
 
     match stream.write(&*buffer)
@@ -56,7 +59,7 @@ fn demo() -> portaudio::PaResult
         Ok(()) => {},
     }
 
-    let _ = waiter.join();
+    sleep.wait();
 
     Ok(())
 }
