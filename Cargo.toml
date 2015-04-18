@@ -1,7 +1,7 @@
 [package]
 
 name = "portaudio"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
 
 [dependencies.portaudio_sys]
