@@ -5,7 +5,6 @@ use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
 use std::mem;
-use std::marker::PhantomFn;
 use util::Duration;
 use libc::{c_void, c_ulong};
 use std::io::prelude::*;
@@ -162,7 +161,7 @@ extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
 ///
 /// *WARNING*: It is not advised to implement this trait for any other types as the size and flag
 /// may not be the correct one.
-pub trait SampleType : PhantomFn<Self>
+pub trait SampleType
 {
     /// Should return the PortAudio flag which corresponds to the type
     fn sample_format() -> u64;
