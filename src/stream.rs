@@ -37,8 +37,8 @@ struct StreamUserData<'a, I, O>
 {
     num_input: u32,
     num_output: u32,
-    callback: Option<&'a mut StreamCallback<'a, I, O>>,
-    finished_callback: Option<&'a mut StreamFinishedCallback<'a>>,
+    callback: Option<Box<StreamCallback<'a, I, O>>>,
+    finished_callback: Option<Box<StreamFinishedCallback<'a>>>,
 }
 
 /// Time information for various stream related values
@@ -213,7 +213,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
                         num_output_channels: u32,
                         sample_rate: f64,
                         frames_per_buffer: u64,
-                        callback: Option<&'a mut StreamCallback<'a, T, T>>)
+                        callback: Option<Box<StreamCallback<'a, T, T>>>)
                        -> Result<Stream<'a, T, T>, PaError>
     {
         let callback_pointer = match callback
@@ -275,7 +275,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
                 sample_rate: f64,
                 frames_per_buffer: u64,
                 flags: StreamFlags,
-                callback: Option<&'a mut StreamCallback<'a, I, O>>)
+                callback: Option<Box<StreamCallback<'a, I, O>>>)
                -> Result<Stream<'a, I, O>, PaError>
     {
         let callback_pointer = match callback
@@ -463,7 +463,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
     }
 
     /// Set a callback which is to be called when the StreamCallback finishes
-    pub fn set_finished_callback(&mut self, finished_callback: &'a mut StreamFinishedCallback<'a>) -> PaResult
+    pub fn set_finished_callback(&mut self, finished_callback: Box<StreamFinishedCallback<'a>>) -> PaResult
     {
         self.user_data.finished_callback = Some(finished_callback);
         let callback_pointer = Some(stream_finished_callback::<I, O> as StreamFinishedCallbackType);

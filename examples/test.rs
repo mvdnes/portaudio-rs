@@ -57,7 +57,7 @@ fn doit()
 
 fn callback_demo()
 {
-    let mut callback = |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
+    let callback = Box::new(|_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
     {
         static mut lp: f32 = 0.0;
         static mut rp: f32 = 0.0;
@@ -81,15 +81,15 @@ fn callback_demo()
         unsafe { rp = right_phase; }
 
         stream::StreamCallbackResult::Continue
-    };
+    });
 
-    let mut finished_callback = || println!("Finshed callback called");
-    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(&mut callback))
+    let finished_callback = Box::new(|| println!("Finshed callback called"));
+    let mut stream = match stream::Stream::open_default(0, 2, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, Some(callback))
     {
         Err(v) => { println!("Err({:?})", v); return },
         Ok(stream) => stream,
     };
-    println!("finished_callback: {:?}", stream.set_finished_callback(&mut finished_callback));
+    println!("finished_callback: {:?}", stream.set_finished_callback(finished_callback));
     println!("start: {:?}", stream.start());
     std::thread::sleep_ms(1000);
     println!("stop: {:?}", stream.stop());
