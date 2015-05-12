@@ -20,4 +20,4 @@ script:
     - cargo build
     - cargo test
     - cargo doc --no-deps
-    - rustdoc --test README.md -L target/debug -L target/debug/deps $(pkg-config --libs-only-L portaudio-2.0)
+    - "rustdoc --test README.md -L target/debug -L target/debug/deps $(pkg-config --libs-only-L portaudio-2.0 | sed 's/-L/-Lnative=/')"
