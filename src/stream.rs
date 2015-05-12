@@ -139,7 +139,7 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
         None => StreamCallbackResult::Abort,
     };
 
-    unsafe { mem::forget(stream_data); }
+    mem::forget(stream_data);
 
     result as i32
 }
@@ -154,7 +154,7 @@ extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
         None => {},
     };
 
-    unsafe { mem::forget(stream_data); }
+    mem::forget(stream_data);
 }
 
 /// Types that are allowed to be used as samples in a Stream
