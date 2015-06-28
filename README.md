@@ -2,7 +2,6 @@ portaudio-rs
 ============
 
 [![Build Status](https://travis-ci.org/mvdnes/portaudio-rs.svg?branch=master)](https://travis-ci.org/mvdnes/portaudio-rs)
-[![Build Status](https://api.shippable.com/projects/553fdfb4edd7f2c052d66b57/badge?branchName=master)](https://app.shippable.com/projects/553fdfb4edd7f2c052d66b57/builds/latest)
 
 [Documentation](https://mvdnes.github.io/rust-docs/portaudio-rs/portaudio/index.html)
 
