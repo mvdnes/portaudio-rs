@@ -1,5 +1,6 @@
 extern crate pkg_config;
 
+#[cfg(not(windows))]
 fn main() {
     match pkg_config::find_library("portaudio-2.0")
     {
@@ -8,3 +9,7 @@ fn main() {
     }
 }
 
+#[cfg(windows)]
+fn main() {
+    // Assume the library is in the correct path
+}
