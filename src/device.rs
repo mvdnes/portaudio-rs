@@ -47,7 +47,7 @@ impl DeviceInfo
     {
         DeviceInfo
         {
-            name: String::from_utf8_lossy(unsafe { CStr::from_ptr(input.name).to_bytes() }).into_owned(),
+            name: String::from_utf8_lossy(unsafe { CStr::from_ptr(input.name as *const _).to_bytes() }).into_owned(),
             host_api: input.hostApi as HostApiIndex,
             max_input_channels: input.maxInputChannels as u32,
             max_output_channels: input.maxOutputChannels as u32,
