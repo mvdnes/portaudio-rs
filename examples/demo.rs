@@ -12,7 +12,7 @@ fn main()
 
 fn print_devs()
 {
-    for i in (0 .. portaudio::device::get_count().unwrap())
+    for i in 0 .. portaudio::device::get_count().unwrap()
     {
         match portaudio::device::get_info(i)
         {
@@ -32,7 +32,7 @@ fn demo() -> portaudio::PaResult
 
     let mut phase = 0.0f32;
     let mut buffer = Vec::with_capacity(44100 * SECONDS);
-    for _i in (0 .. 44100 * SECONDS)
+    for _i in 0 .. 44100 * SECONDS
     {
         buffer.push(phase);
 
