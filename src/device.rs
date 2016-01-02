@@ -6,6 +6,7 @@ use hostapi::HostApiIndex;
 use pa::PaError;
 use util::Duration;
 use std::ffi::CStr;
+use std::os::raw::c_char;
 
 /// Index of a Device
 pub type DeviceIndex = u32;
@@ -47,7 +48,7 @@ impl DeviceInfo
     {
         DeviceInfo
         {
-            name: String::from_utf8_lossy(unsafe { CStr::from_ptr(input.name).to_bytes() }).into_owned(),
+            name: String::from_utf8_lossy(unsafe { CStr::from_ptr(input.name as *const c_char).to_bytes() }).into_owned(),
             host_api: input.hostApi as HostApiIndex,
             max_input_channels: input.maxInputChannels as u32,
             max_output_channels: input.maxOutputChannels as u32,
