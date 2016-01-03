@@ -9,4 +9,4 @@ path = "portaudio_sys"
 
 [dependencies]
 bitflags = "0.3"
-libc = "0.1"
+libc = "0.2"
