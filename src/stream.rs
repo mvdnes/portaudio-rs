@@ -533,9 +533,17 @@ impl<T: SampleType> StreamParameters<T>
 }
 
 /// Returns Ok when the StreamParameters are supported. This ignores the latency field.
-pub fn is_format_supported<I: SampleType, O: SampleType>(input: StreamParameters<I>, output: StreamParameters<O>, sample_rate: f64) -> PaResult
+pub fn is_format_supported<I: SampleType, O: SampleType>(input: Option<StreamParameters<I>>, output: Option<StreamParameters<O>>, sample_rate: f64) -> PaResult
 {
-    to_pa_result(unsafe { ll::Pa_IsFormatSupported(&input.to_ll(), &output.to_ll(), sample_rate) })
+    let input_ptr = match input {
+        Some(sp) => &sp.to_ll() as *const _,
+        None => ptr::null(),
+    };
+    let output_ptr = match output {
+        Some(sp) => &sp.to_ll() as *const _,
+        None => ptr::null(),
+    };
+    to_pa_result(unsafe { ll::Pa_IsFormatSupported(input_ptr, output_ptr, sample_rate) })
 }
 
 /// Information about the actual latency and sample rate values the stream uses

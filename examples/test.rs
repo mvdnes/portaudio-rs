@@ -132,34 +132,23 @@ fn get_buffer(len: usize) -> Vec<f32>
 
 fn mixed_demo()
 {
-    let in_idx = match device::get_default_input_index()
-    {
-        Ok(i) => i,
-        Err(_) => return,
-    };
     let out_idx = match device::get_default_output_index()
     {
         Ok(o) => o,
         Err(_) => return,
-    };
-    let in_lat = match device::get_info(in_idx)
-    {
-        None => return,
-        Some(d) => d.default_low_input_latency,
     };
     let out_lat = match device::get_info(out_idx)
     {
         None => return,
         Some(d) => d.default_low_output_latency,
     };
-    let input = stream::StreamParameters { device: in_idx, channel_count: 2, suggested_latency: in_lat, data: 0f32 };
     let output = stream::StreamParameters { device: out_idx, channel_count: 2, suggested_latency: out_lat, data: 0i8 };
 
-    let supported = stream::is_format_supported(input, output, 44100f64);
+    let supported = stream::is_format_supported::<i8, _>(None, Some(output), 44100f64);
     println!("support? {:?}", supported);
     if supported.is_err() { return }
 
-    let stream = match stream::Stream::<i8, i8>::open(None, Some(output), 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, stream::StreamFlags::empty(), None)
+    let stream = match stream::Stream::<i8, _>::open(None, Some(output), 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, stream::StreamFlags::empty(), None)
     {
         Ok(s) => s,
         Err(o) => { println!("stream: Err({:?})", o); return },
