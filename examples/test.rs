@@ -159,7 +159,7 @@ fn mixed_demo()
     println!("support? {:?}", supported);
     if supported.is_err() { return }
 
-    let stream = match stream::Stream::open(input, output, 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, stream::StreamFlags::empty(), None)
+    let stream = match stream::Stream::<i8, i8>::open(None, Some(output), 44100f64, stream::FRAMES_PER_BUFFER_UNSPECIFIED, stream::StreamFlags::empty(), None)
     {
         Ok(s) => s,
         Err(o) => { println!("stream: Err({:?})", o); return },

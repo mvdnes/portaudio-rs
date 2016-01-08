@@ -8,6 +8,7 @@ use std::mem;
 use util::Duration;
 use libc::{c_void, c_ulong};
 use std::io::prelude::*;
+use std::ptr;
 
 type StreamCallbackType = extern "C" fn(*const c_void, *mut c_void, ::libc::c_ulong, *const ll::PaStreamCallbackTimeInfo, ll::PaStreamCallbackFlags, *mut c_void) -> ::libc::c_int;
 type StreamFinishedCallbackType = extern "C" fn(*mut c_void);
@@ -270,8 +271,8 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
     /// * flags: Additional flags for the behaviour of the stream
     /// * callback: Some(callback) which PortAudio will call to read/write the buffers, or None
     /// when using the read and write methods
-    pub fn open(input: StreamParameters<I>,
-                output: StreamParameters<O>,
+    pub fn open(input: Option<StreamParameters<I>>,
+                output: Option<StreamParameters<O>>,
                 sample_rate: f64,
                 frames_per_buffer: u64,
                 flags: StreamFlags,
@@ -284,10 +285,19 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
             None => None,
         };
 
+        let (input_cnt, input_ptr) = match input {
+            Some(sp) => (sp.channel_count, &sp.to_ll() as *const _),
+            None => (0, ptr::null()),
+        };
+        let (output_cnt, output_ptr) = match output {
+            Some(sp) => (sp.channel_count, &sp.to_ll() as *const _),
+            None => (0, ptr::null()),
+        };
+
         let mut user_data = Box::new(StreamUserData
         {
-            num_input: input.channel_count,
-            num_output: output.channel_count,
+            num_input: input_cnt,
+            num_output: output_cnt,
             callback: callback,
             finished_callback: None,
         });
@@ -299,8 +309,8 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
         let result = unsafe
         {
             ll::Pa_OpenStream(&mut pa_stream,
-                              &input.to_ll(),
-                              &output.to_ll(),
+                              input_ptr,
+                              output_ptr,
                               sample_rate,
                               frames_per_buffer as c_ulong,
                               flags.bits as c_ulong,
@@ -312,8 +322,8 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
         {
             Ok(()) => Ok(Stream { pa_stream: pa_stream,
                                   user_data: unsafe { mem::transmute(pointer_for_struct) },
-                                  inputs: input.channel_count,
-                                  outputs: output.channel_count,
+                                  inputs: input_cnt,
+                                  outputs: output_cnt,
                       }),
             Err(v) => Err(v),
         }
