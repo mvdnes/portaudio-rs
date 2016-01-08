@@ -249,7 +249,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
         match to_pa_result(code)
         {
             Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                  user_data: unsafe { mem::transmute(pointer_for_struct) },
+                                  user_data: unsafe { mem::transmute(userdata) },
                                   inputs: num_input_channels,
                                   outputs: num_output_channels,
                          }),
@@ -321,7 +321,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
         match to_pa_result(result)
         {
             Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                  user_data: unsafe { mem::transmute(pointer_for_struct) },
+                                  user_data: unsafe { mem::transmute(user_data) },
                                   inputs: input_cnt,
                                   outputs: output_cnt,
                       }),
@@ -492,6 +492,7 @@ impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
 {
     fn drop(&mut self)
     {
+        debug_assert!(self.user_data.num_output == self.outputs); //userdata should not be garbled
         match self.close()
         {
             Err(v) => { let _ = write!(&mut ::std::io::stderr(), "Stream drop error: {:?}\n", v); },
