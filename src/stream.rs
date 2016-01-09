@@ -263,8 +263,8 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
     /// Constructs a stream with the desired input and output specifications
     ///
     /// ## Arguments
-    /// * input: Specification for the input channel
-    /// * output: Specification for the output channel
+    /// * input: Specification for the input channel, or None for an output-only stream
+    /// * output: Specification for the output channel, or None for an input-only stream
     /// * sample_rate: Sample rate of the stream
     /// * frames_per_buffer: Number of frames per buffer. Use FRAMES_PER_BUFFER_UNSPECIFIED to let
     /// portaudio determine the optimal number.
