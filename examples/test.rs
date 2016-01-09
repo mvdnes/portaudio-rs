@@ -134,8 +134,8 @@ fn mixed_demo()
 {
     let out_idx = match device::get_default_output_index()
     {
-        Ok(o) => o,
-        Err(_) => return,
+        Some(o) => o,
+        None => return,
     };
     let out_lat = match device::get_info(out_idx)
     {

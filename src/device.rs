@@ -73,24 +73,24 @@ pub fn get_count() -> Result<u32, PaError>
 /// Retrieve the index of the default input device
 ///
 /// Will return Err(NoDevice) when non are available.
-pub fn get_default_input_index() -> Result<DeviceIndex, PaError>
+pub fn get_default_input_index() -> Option<DeviceIndex>
 {
     match unsafe { ll::Pa_GetDefaultInputDevice() }
     {
-        n if n >= 0 => Ok(n as u32),
-        m => to_pa_result(m).map(|_| 0),
+        n if n >= 0 => Some(n as u32),
+        _ => None,
     }
 }
 
 /// Retrieve the index of the default output device
 ///
 /// Will return Err(NoDevice) when non are available.
-pub fn get_default_output_index() -> Result<DeviceIndex, PaError>
+pub fn get_default_output_index() -> Option<DeviceIndex>
 {
     match unsafe { ll::Pa_GetDefaultOutputDevice() }
     {
-        n if n >= 0 => Ok(n as u32),
-        m => to_pa_result(m).map(|_| 0),
+        n if n >= 0 => Some(n as u32),
+        _ => None,
     }
 }
 
