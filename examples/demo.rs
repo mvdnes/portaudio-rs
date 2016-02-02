@@ -41,7 +41,7 @@ fn demo() -> portaudio::PaResult
     }
 
     let waiter = std::thread::spawn(move|| {
-        std::thread::sleep_ms((SECONDS * 1000) as u32);
+        std::thread::sleep(std::time::Duration::from_secs(SECONDS as u64));
     });
 
     match stream.write(&*buffer)

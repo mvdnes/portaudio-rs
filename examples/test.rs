@@ -91,12 +91,12 @@ fn callback_demo()
     };
     println!("finished_callback: {:?}", stream.set_finished_callback(finished_callback));
     println!("start: {:?}", stream.start());
-    std::thread::sleep_ms(1000);
+    std::thread::sleep(std::time::Duration::from_secs(1));
     println!("stop: {:?}", stream.stop());
 
     println!("finished_callback: {:?}", stream.unset_finished_callback());
     println!("start: {:?}", stream.start());
-    std::thread::sleep_ms(1000);
+    std::thread::sleep(std::time::Duration::from_secs(1));
     println!("stop: {:?}", stream.stop());
 }
 
