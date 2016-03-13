@@ -248,7 +248,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
         match to_pa_result(code)
         {
             Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                  user_data: unsafe { mem::transmute(userdata) },
+                                  user_data: userdata,
                                   inputs: num_input_channels,
                                   outputs: num_output_channels,
                          }),
@@ -319,7 +319,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
         match to_pa_result(result)
         {
             Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                  user_data: unsafe { mem::transmute(user_data) },
+                                  user_data: user_data,
                                   inputs: input_cnt,
                                   outputs: output_cnt,
                       }),
