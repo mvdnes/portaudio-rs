@@ -232,7 +232,6 @@ impl<'a, T: SampleType> Stream<'a, T, T>
         let mut pa_stream = ::std::ptr::null_mut();
 
         let pointer_for_callback: *mut c_void = &mut *userdata as *mut StreamUserData<T, T> as *mut c_void;
-        let pointer_for_struct = pointer_for_callback.clone();
 
         let code = unsafe
         {
@@ -304,7 +303,6 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
 
         let mut pa_stream = ::std::ptr::null_mut();
         let pointer_for_callback: *mut c_void = &mut *user_data as *mut StreamUserData<I, O> as *mut c_void;
-        let pointer_for_struct = pointer_for_callback.clone();
 
         let result = unsafe
         {
