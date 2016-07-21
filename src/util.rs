@@ -23,16 +23,19 @@ pub fn duration_to_pa_time(duration: Duration) -> f64
 }
 
 mod duration {
+    /// Time duration in milliseconds
     #[derive(Copy, Clone)]
     pub struct Duration {
         ms: i64,
     }
 
     impl Duration {
+        /// Returns the duration's number of milliseconds
         pub fn num_milliseconds(&self) -> i64 {
             self.ms
         }
 
+        /// Constructs a new duration with the specified number of milliseconds
         pub fn milliseconds(milliseconds: i64) -> Duration {
             Duration { ms: milliseconds }
         }
