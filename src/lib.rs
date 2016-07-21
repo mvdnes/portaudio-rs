@@ -45,6 +45,7 @@ extern crate libc;
 extern crate portaudio_sys as ll;
 
 pub use pa::{PaError, PaResult, initialize, terminate, version, version_text};
+pub use util::Duration;
 
 pub mod stream;
 mod pa;
