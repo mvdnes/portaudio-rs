@@ -14,9 +14,10 @@ pub fn to_pa_result(code: i32) -> PaResult
 
 pub fn pa_time_to_duration(input: f64) -> Duration
 {
-    assert!(input >= 0.0);
-    let secs = input.floor();
-    let nanos = (input - secs) * 1e9;
+    assert!(input >= -1.0);
+    let valid_input = if input < 0.0 { 0.0 } else { input };
+    let secs = valid_input.floor();
+    let nanos = (valid_input - secs) * 1e9;
     Duration::new(secs as u64, nanos as u32)
 }
 
