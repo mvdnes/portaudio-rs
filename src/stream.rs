@@ -284,13 +284,15 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
             None => None,
         };
 
-        let (input_cnt, input_ptr) = match input {
-            Some(sp) => (sp.channel_count, &sp.to_ll() as *const _),
-            None => (0, ptr::null()),
+        let input_cnt; let input_obj; let input_ptr;
+        let output_cnt; let output_obj; let output_ptr;
+        match input {
+            Some(sp) => { input_cnt = sp.channel_count; input_obj = sp.to_ll(); input_ptr = &input_obj as *const _ },
+            None => { input_cnt = 0; input_ptr = ptr::null() },
         };
-        let (output_cnt, output_ptr) = match output {
-            Some(sp) => (sp.channel_count, &sp.to_ll() as *const _),
-            None => (0, ptr::null()),
+        match output {
+            Some(sp) => { output_cnt = sp.channel_count; output_obj = sp.to_ll(); output_ptr = &output_obj as *const _ },
+            None => { output_cnt = 0; output_ptr = ptr::null() },
         };
 
         let mut user_data = Box::new(StreamUserData
@@ -534,14 +536,17 @@ impl<T: SampleType> StreamParameters<T>
 /// Returns Ok when the StreamParameters are supported. This ignores the latency field.
 pub fn is_format_supported<I: SampleType, O: SampleType>(input: Option<StreamParameters<I>>, output: Option<StreamParameters<O>>, sample_rate: f64) -> PaResult
 {
-    let input_ptr = match input {
-        Some(sp) => &sp.to_ll() as *const _,
-        None => ptr::null(),
+    let input_obj; let input_ptr;
+    let output_obj; let output_ptr;
+    match input {
+        Some(sp) => { input_obj = sp.to_ll(); input_ptr = &input_obj as *const _ },
+        None => input_ptr = ptr::null(),
     };
-    let output_ptr = match output {
-        Some(sp) => &sp.to_ll() as *const _,
-        None => ptr::null(),
+    match output {
+        Some(sp) => { output_obj = sp.to_ll(); output_ptr = &output_obj as *const _ },
+        None => output_ptr = ptr::null(),
     };
+
     to_pa_result(unsafe { ll::Pa_IsFormatSupported(input_ptr, output_ptr, sample_rate) })
 }
 
