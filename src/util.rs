@@ -35,5 +35,14 @@ mod test {
 
         println!("{}", (seconds - seconds2).abs());
         assert!((seconds - seconds2).abs() <= 1e-8);
+
+        let duration2 = super::pa_time_to_duration(-seconds);
+        let seconds3 = super::duration_to_pa_time(duration2);
+
+        println!("{}.{}", duration2.as_secs(), duration2.subsec_nanos());
+        assert!(duration2.as_secs() == 0);
+        assert!(duration2.subsec_nanos() == 0);
+        println!("{}", seconds3.abs());
+        assert!(seconds3.abs() <= 1e-8);
     }
 }
