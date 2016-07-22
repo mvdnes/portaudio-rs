@@ -14,9 +14,9 @@ pub fn to_pa_result(code: i32) -> PaResult
 
 pub fn pa_time_to_duration(input: f64) -> Duration
 {
-    assert!(input >= 0.0);
-    let secs = input.floor();
-    let nanos = (input - secs) * 1e9;
+    let valid_input = if input < 0.0 { 0.0 } else { input };
+    let secs = valid_input.floor();
+    let nanos = (valid_input - secs) * 1e9;
     Duration::new(secs as u64, nanos as u32)
 }
 
@@ -35,5 +35,14 @@ mod test {
 
         println!("{}", (seconds - seconds2).abs());
         assert!((seconds - seconds2).abs() <= 1e-8);
+
+        let duration2 = super::pa_time_to_duration(-seconds);
+        let seconds3 = super::duration_to_pa_time(duration2);
+
+        println!("{}.{}", duration2.as_secs(), duration2.subsec_nanos());
+        assert!(duration2.as_secs() == 0);
+        assert!(duration2.subsec_nanos() == 0);
+        println!("{}", seconds3.abs());
+        assert!(seconds3.abs() <= 1e-8);
     }
 }
