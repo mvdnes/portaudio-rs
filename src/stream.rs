@@ -5,7 +5,7 @@ use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
 use std::mem;
-use util::Duration;
+use std::time::Duration;
 use libc::{c_void, c_ulong};
 use std::io::prelude::*;
 use std::ptr;

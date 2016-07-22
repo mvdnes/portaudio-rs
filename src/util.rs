@@ -1,7 +1,7 @@
 use pa::{PaResult, PaError};
 use ll;
 
-pub use self::duration::Duration;
+use std::time::Duration;
 
 pub fn to_pa_result(code: i32) -> PaResult
 {
@@ -12,29 +12,28 @@ pub fn to_pa_result(code: i32) -> PaResult
     Err(PaError::from_i32(code))
 }
 
-pub fn pa_time_to_duration(seconds: f64) -> Duration
+pub fn pa_time_to_duration(input: f64) -> Duration
 {
-    Duration::milliseconds((seconds * 1000.0) as i64)
+    assert!(input >= 0.0);
+    let secs = input.floor();
+    let nanos = (input - secs) * 1e9;
+    Duration::new(secs as u64, nanos as u32)
 }
 
 pub fn duration_to_pa_time(duration: Duration) -> f64
 {
-    duration.num_milliseconds() as f64 / 1000.0
+    duration.as_secs() as f64 + (duration.subsec_nanos() as f64 * 1e-9)
 }
 
-mod duration {
-    #[derive(Copy, Clone)]
-    pub struct Duration {
-        ms: i64,
-    }
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_conversion() {
+        let seconds = 2.512389131321938123681627;
+        let duration = super::pa_time_to_duration(seconds);
+        let seconds2 = super::duration_to_pa_time(duration);
 
-    impl Duration {
-        pub fn num_milliseconds(&self) -> i64 {
-            self.ms
-        }
-
-        pub fn milliseconds(milliseconds: i64) -> Duration {
-            Duration { ms: milliseconds }
-        }
+        println!("{}", (seconds - seconds2).abs());
+        assert!((seconds - seconds2).abs() <= 1e-8);
     }
 }

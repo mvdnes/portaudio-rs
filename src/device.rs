@@ -4,7 +4,7 @@ use ll;
 use util::{to_pa_result, pa_time_to_duration};
 use hostapi::HostApiIndex;
 use pa::PaError;
-use util::Duration;
+use std::time::Duration;
 use std::ffi::CStr;
 
 /// Index of a Device
