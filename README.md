@@ -13,7 +13,7 @@ Example
 -------
 
 ```rust
-extern crate portaudio;
+extern crate portaudio_rs as portaudio;
 
 fn demo() -> portaudio::PaResult
 {
