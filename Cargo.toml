@@ -1,12 +1,11 @@
 [package]
-
 name = "portaudio"
 version = "0.2.0"
 authors = ["mvdnes <git@mathijs.vd-nes.nl>"]
-
-[dependencies.portaudio_sys]
-path = "portaudio_sys"
+description = "PortAudio bindings for Rust"
+license = "MIT"
 
 [dependencies]
 bitflags = "0.3"
 libc = "0.2"
+portaudio-sys = { path = "portaudio-sys", version = "0.1" }
