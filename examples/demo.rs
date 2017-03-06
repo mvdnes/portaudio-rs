@@ -1,4 +1,4 @@
-extern crate portaudio;
+extern crate portaudio_rs as portaudio;
 
 static SECONDS: usize = 1;
 

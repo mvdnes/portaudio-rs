@@ -1,4 +1,4 @@
-extern crate portaudio;
+extern crate portaudio_rs as portaudio;
 
 use portaudio::{stream, hostapi, device};
 

@@ -115,7 +115,7 @@ pub fn get_info(index: DeviceIndex) -> Option<DeviceInfo>
 ///
 /// ```
 /// // We retrieve the index of device 3 of api 1
-/// let device_index = match portaudio::device::get_from_host_api_device_index(1, 3)
+/// let device_index = match portaudio_rs::device::get_from_host_api_device_index(1, 3)
 /// {
 ///     Ok(n) => n,
 ///     Err(e) => { println!("Error: {:?}", e); return },

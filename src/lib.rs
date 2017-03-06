@@ -1,5 +1,5 @@
 #![crate_type = "lib"]
-#![crate_name = "portaudio"]
+#![crate_name = "portaudio_rs"]
 #![warn(missing_docs)]
 
 //! PortAudio bindings for Rust
@@ -7,13 +7,13 @@
 //! # Example
 //!
 //! ```
-//! fn demo() -> portaudio::PaResult
+//! fn demo() -> portaudio_rs::PaResult
 //! {
-//!     let stream = try!(portaudio::stream::Stream::open_default(
+//!     let stream = try!(portaudio_rs::stream::Stream::open_default(
 //!                           0, // input channels
 //!                           1, // output channels
 //!                           44100.0, // sample rate
-//!                           portaudio::stream::FRAMES_PER_BUFFER_UNSPECIFIED,
+//!                           portaudio_rs::stream::FRAMES_PER_BUFFER_UNSPECIFIED,
 //!                           None // no callback
 //!                      ));
 //!
@@ -35,9 +35,9 @@
 //!     Ok(())
 //! }
 //!
-//! portaudio::initialize().unwrap();
+//! portaudio_rs::initialize().unwrap();
 //! println!("{:?}", demo());
-//! portaudio::terminate().unwrap();
+//! portaudio_rs::terminate().unwrap();
 //! ```
 
 extern crate libc;
