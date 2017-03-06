@@ -3,7 +3,7 @@ portaudio-rs
 
 [![Build Status](https://travis-ci.org/mvdnes/portaudio-rs.svg?branch=master)](https://travis-ci.org/mvdnes/portaudio-rs)
 
-[Documentation](https://mvdnes.github.io/rust-docs/portaudio-rs/portaudio/index.html)
+[Documentation](https://mvdnes.github.io/rust-docs/portaudio-rs/portaudio_rs/index.html)
 
 PortAudio bindings for Rust
 
