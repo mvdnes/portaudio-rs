@@ -16,7 +16,7 @@ pub fn version() -> i32
 pub fn version_text() -> String
 {
     let version_c = unsafe { ll::Pa_GetVersionText() };
-    let version_s = String::from_utf8_lossy(unsafe { CStr::from_ptr(version_c).to_bytes() });
+    let version_s = String::from_utf8_lossy(unsafe { CStr::from_ptr(version_c as *const _).to_bytes() });
     version_s.into_owned()
 }
 
@@ -128,7 +128,7 @@ impl fmt::Display for PaError
             other =>
             {
                 let message_c = unsafe { ll::Pa_GetErrorText(other as i32) };
-                let message_s = String::from_utf8_lossy(unsafe { CStr::from_ptr(message_c).to_bytes() });
+                let message_s = String::from_utf8_lossy(unsafe { CStr::from_ptr(message_c as *const _).to_bytes() });
                 f.write_str(&*message_s)
             }
         }
