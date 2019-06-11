@@ -142,6 +142,8 @@ impl fmt::Debug for PaError
     }
 }
 
+impl std::error::Error for PaError {}
+
 /// A result type wrapping PaError.
 ///
 /// The original NoError is mapped to Ok(()) and other values mapped to Err(x)
