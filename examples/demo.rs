@@ -24,11 +24,11 @@ fn print_devs()
 
 fn demo() -> portaudio::PaResult
 {
-    let stream = try!(portaudio::stream::Stream::open_default(1, 1, 44100.0, portaudio::stream::FRAMES_PER_BUFFER_UNSPECIFIED, None));
+    let stream = portaudio::stream::Stream::open_default(1, 1, 44100.0, portaudio::stream::FRAMES_PER_BUFFER_UNSPECIFIED, None)?;
 
-    try!(stream.start());
+    stream.start()?;
 
-    let input = try!(stream.read(44100));
+    let input = stream.read(44100)?;
 
     let mut phase = 0.0f32;
     let mut buffer = Vec::with_capacity(44100 * SECONDS);

@@ -15,36 +15,30 @@ fn main()
 
 fn print_info()
 {
-    match hostapi::get_count()
+    if let Ok(api_count) = hostapi::get_count()
     {
-        Ok(api_count) => {
-            for i in 0 .. api_count
+        for i in 0 .. api_count
+        {
+            let name = match hostapi::get_info(i)
             {
-                let name = match hostapi::get_info(i)
-                {
-                    None => "???".to_string(),
-                    Some(ha) => ha.name,
-                };
-                println!("api {}: {}", i, name);
-            }
-        },
-        _ => {},
+                None => "???".to_string(),
+                Some(ha) => ha.name,
+            };
+            println!("api {}: {}", i, name);
+        }
     }
 
-    match device::get_count()
+    if let Ok(device_count) = device::get_count()
     {
-        Ok(device_count) => {
-            for i in 0 .. device_count
+        for i in 0 .. device_count
+        {
+            let name = match device::get_info(i)
             {
-                let name = match device::get_info(i)
-                {
-                    None => "???".to_string(),
-                    Some(d) => d.name,
-                };
-                println!("dev {}: {}", i, name);
-            }
-        },
-        _ => {},
+                None => "???".to_string(),
+                Some(d) => d.name,
+            };
+            println!("dev {}: {}", i, name);
+        }
     }
 }
 
@@ -59,11 +53,11 @@ fn callback_demo()
 {
     let callback = Box::new(|_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
     {
-        static mut lp: f32 = 0.0;
-        static mut rp: f32 = 0.0;
+        static mut LP: f32 = 0.0;
+        static mut RP: f32 = 0.0;
 
-        let mut left_phase = unsafe { lp };
-        let mut right_phase = unsafe { rp };
+        let mut left_phase = unsafe { LP };
+        let mut right_phase = unsafe { RP };
 
         for i in 0 .. output.len() / 2
         {
@@ -77,8 +71,8 @@ fn callback_demo()
             if right_phase >= 1.0 { right_phase -= 2.0; }
         }
 
-        unsafe { lp = left_phase; }
-        unsafe { rp = right_phase; }
+        unsafe { LP = left_phase; }
+        unsafe { RP = right_phase; }
 
         stream::StreamCallbackResult::Continue
     });
