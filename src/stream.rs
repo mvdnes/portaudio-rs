@@ -4,7 +4,6 @@ use ll;
 use pa::{PaError, PaResult};
 use device::DeviceIndex;
 use util::{to_pa_result, pa_time_to_duration, duration_to_pa_time};
-use std::mem;
 use std::time::Duration;
 use libc::{c_void, c_ulong};
 use std::io::prelude::*;
@@ -29,10 +28,10 @@ pub enum StreamCallbackResult
 }
 
 /// Callback to consume, process or generate audio
-pub type StreamCallback<'a, I, O> = FnMut(&[I], &mut [O], StreamTimeInfo, StreamCallbackFlags) -> StreamCallbackResult + 'a;
+pub type StreamCallback<'a, I, O> = dyn FnMut(&[I], &mut [O], StreamTimeInfo, StreamCallbackFlags) -> StreamCallbackResult + 'a;
 
 /// Callback to be fired when a StreamCallback is stopped
-pub type StreamFinishedCallback<'a> = FnMut() + 'a;
+pub type StreamFinishedCallback<'a> = dyn FnMut() + 'a;
 
 struct StreamUserData<'a, I, O>
 {
@@ -71,41 +70,41 @@ impl StreamTimeInfo
 
 bitflags!(
     #[doc="Flags indicating the status of the callback"]
-    flags StreamCallbackFlags: u64 {
+    pub struct StreamCallbackFlags: u64 {
         #[doc="Indicates that the callback has inserted one or more zeroes since not enough data was available"]
-        const INPUT_UNDERFLOW = 0x01,
+        const INPUT_UNDERFLOW = 0x01;
 
         #[doc="Indicates that the callback has discarded some data"]
-        const INPUT_OVERFLOW = 0x02,
+        const INPUT_OVERFLOW = 0x02;
 
         #[doc="Indicates that extra data was inserted in the output since there was not engough available"]
-        const OUTPUT_UNDERFLOW = 0x04,
+        const OUTPUT_UNDERFLOW = 0x04;
 
         #[doc="Indicates that certain data was discarded since there was no room"]
-        const OUTPUT_OVERFLOW = 0x08,
+        const OUTPUT_OVERFLOW = 0x08;
 
         #[doc="Some or all of the output data will be used to prime the stream, input data may be zero"]
-        const PRIMING_OUTPUT = 0x10
+        const PRIMING_OUTPUT = 0x10;
     }
 );
 
 bitflags!(
     #[doc="Flags used to control the behavior of a stream"]
-    flags StreamFlags: u64 {
+    pub struct StreamFlags: u64 {
         #[doc="Disable clipping of out of range samples"]
-        const CLIP_OFF                                   = 0x00000001,
+        const CLIP_OFF                                   = 0x0000_0001;
 
         #[doc="Disable dithering"]
-        const DITHER_OFF                                 = 0x00000002,
+        const DITHER_OFF                                 = 0x0000_0002;
 
         #[doc="Request that a full duplex stream will not discard overflowed input samples. The frames_per_buffer must be set to unspecified (0)"]
-        const NEVER_DROP_INPUT                           = 0x00000004,
+        const NEVER_DROP_INPUT                           = 0x0000_0004;
 
         #[doc="Call the stream callback to fill initial output buffers, rather than priming the buffers with silence"]
-        const PRIME_OUTPUT_BUFFERS_USING_STREAM_CALLBACK = 0x00000008,
+        const PRIME_OUTPUT_BUFFERS_USING_STREAM_CALLBACK = 0x0000_0008;
 
         #[doc="Range for platform specific flags. Not all of the upper 16 bits need to be set at the same time."]
-        const PLATFORM_SPECIFIC                          = 0xFFFF0000
+        const PLATFORM_SPECIFIC                          = 0xFFFF_0000;
     }
 );
 
@@ -116,8 +115,8 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
                                     status_flags: ll::PaStreamCallbackFlags,
                                     user_data: *mut c_void) -> ::libc::c_int
 {
-    // TODO: use Box::from_raw once it is stable
-    let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
+    // We do not want to deallocate this memory since it is owned by other user code. So leak the box.
+    let stream_data: &mut StreamUserData<I, O> = Box::leak( unsafe { Box::from_raw(user_data as *mut StreamUserData<I, O>) } );
 
     let input_buffer: &[I] = unsafe
     {
@@ -140,22 +139,17 @@ extern "C" fn stream_callback<I, O>(input: *const c_void,
         None => StreamCallbackResult::Abort,
     };
 
-    mem::forget(stream_data);
-
     result as i32
 }
 
 extern "C" fn stream_finished_callback<I, O>(user_data: *mut c_void)
 {
-    // TODO: use Box::from_raw once it is stable
-    let mut stream_data: Box<StreamUserData<I, O>> = unsafe { mem::transmute(user_data) };
-    match stream_data.finished_callback
+    // We do not want to deallocate this memory since it is owned by other user code. So leak the box.
+    let stream_data: &mut StreamUserData<I, O> = Box::leak( unsafe { Box::from_raw(user_data as *mut StreamUserData<I, O>) } );
+    if let Some(ref mut f) = stream_data.finished_callback
     {
-        Some(ref mut f) => (*f)(),
-        None => {},
+         (*f)();
     };
-
-    mem::forget(stream_data);
 }
 
 /// Types that are allowed to be used as samples in a Stream
@@ -167,11 +161,11 @@ pub trait SampleType
     /// Should return the PortAudio flag which corresponds to the type
     fn sample_format() -> u64;
 }
-impl SampleType for f32 { fn sample_format() -> u64 { 0x00000001 } }
-impl SampleType for i32 { fn sample_format() -> u64 { 0x00000002 } }
-impl SampleType for i16 { fn sample_format() -> u64 { 0x00000008 } }
-impl SampleType for i8 { fn sample_format() -> u64 { 0x00000010 } }
-impl SampleType for u8 { fn sample_format() -> u64 { 0x00000020 } }
+impl SampleType for f32 { fn sample_format() -> u64 { 0x0000_0001 } }
+impl SampleType for i32 { fn sample_format() -> u64 { 0x0000_0002 } }
+impl SampleType for i16 { fn sample_format() -> u64 { 0x0000_0008 } }
+impl SampleType for i8 { fn sample_format() -> u64 { 0x0000_0010 } }
+impl SampleType for u8 { fn sample_format() -> u64 { 0x0000_0020 } }
 
 #[cfg(test)]
 fn get_sample_size<T: SampleType>() -> Result<u32, PaError>
@@ -226,7 +220,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
         {
             num_input: num_input_channels,
             num_output: num_output_channels,
-            callback: callback,
+            callback,
             finished_callback: None,
         });
         let mut pa_stream = ::std::ptr::null_mut();
@@ -247,7 +241,7 @@ impl<'a, T: SampleType> Stream<'a, T, T>
 
         match to_pa_result(code)
         {
-            Ok(()) => Ok(Stream { pa_stream: pa_stream,
+            Ok(()) => Ok(Stream { pa_stream,
                                   user_data: userdata,
                                   inputs: num_input_channels,
                                   outputs: num_output_channels,
@@ -299,7 +293,7 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
         {
             num_input: input_cnt,
             num_output: output_cnt,
-            callback: callback,
+            callback,
             finished_callback: None,
         });
 
@@ -320,8 +314,8 @@ impl<'a, I: SampleType, O: SampleType> Stream<'a, I, O>
 
         match to_pa_result(result)
         {
-            Ok(()) => Ok(Stream { pa_stream: pa_stream,
-                                  user_data: user_data,
+            Ok(()) => Ok(Stream { pa_stream,
+                                  user_data,
                                   inputs: input_cnt,
                                   outputs: output_cnt,
                       }),
@@ -493,10 +487,9 @@ impl<'a, I: SampleType, O: SampleType> Drop for Stream<'a, I, O>
     fn drop(&mut self)
     {
         debug_assert!(self.user_data.num_output == self.outputs); //userdata should not be garbled
-        match self.close()
+        if let Err(v) = self.close()
         {
-            Err(v) => { let _ = write!(&mut ::std::io::stderr(), "Stream drop error: {:?}\n", v); },
-            Ok(_) => {},
+            let _ = writeln!(&mut ::std::io::stderr(), "Stream drop error: {:?}", v);
         };
     }
 }

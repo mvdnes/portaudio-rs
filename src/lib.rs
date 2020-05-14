@@ -9,15 +9,15 @@
 //! ```
 //! fn demo() -> portaudio_rs::PaResult
 //! {
-//!     let stream = try!(portaudio_rs::stream::Stream::open_default(
+//!     let stream = portaudio_rs::stream::Stream::open_default(
 //!                           0, // input channels
 //!                           1, // output channels
 //!                           44100.0, // sample rate
 //!                           portaudio_rs::stream::FRAMES_PER_BUFFER_UNSPECIFIED,
 //!                           None // no callback
-//!                      ));
+//!                  )?;
 //!
-//!     try!(stream.start());
+//!     stream.start()?;
 //!
 //!     let mut phase = 0.0f32;
 //!     let mut buffer = Vec::with_capacity(44100);
@@ -30,7 +30,7 @@
 //!         if phase > 1.0 { phase -= 2.0; }
 //!     }
 //!
-//!     try!(stream.write(&buffer));
+//!     stream.write(&buffer)?;
 //!
 //!     Ok(())
 //! }
