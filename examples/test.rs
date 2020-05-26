@@ -51,13 +51,12 @@ fn doit()
 
 fn callback_demo()
 {
-    let callback = Box::new(|_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
+    let mut lp = 0.0f32;
+    let mut rp = 0.0f32;
+    let callback = Box::new(move |_input: &[f32], output: &mut [f32], _time: stream::StreamTimeInfo, _flags: stream::StreamCallbackFlags| -> stream::StreamCallbackResult
     {
-        static mut LP: f32 = 0.0;
-        static mut RP: f32 = 0.0;
-
-        let mut left_phase = unsafe { LP };
-        let mut right_phase = unsafe { RP };
+        let mut left_phase = lp;
+        let mut right_phase = rp;
 
         for i in 0 .. output.len() / 2
         {
@@ -71,8 +70,8 @@ fn callback_demo()
             if right_phase >= 1.0 { right_phase -= 2.0; }
         }
 
-        unsafe { LP = left_phase; }
-        unsafe { RP = right_phase; }
+        lp = left_phase;
+        rp = right_phase;
 
         stream::StreamCallbackResult::Continue
     });
